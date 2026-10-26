@@ -2,12 +2,12 @@
 
 本仓库收集整理 [CuteHttpFileServer/chfs](http://iscute.cn/chfs)（v3.1）的官方程序文件，方便国内用户直接下载。
 
-- **chfs**：免费、HTTP 协议的文件共享服务器，单文件运行，浏览器即可访问
+- **chfs**：免费的 HTTP 协议文件共享服务器，单文件运行，浏览器即可访问
 - **chfsgui**：Windows 图形界面封装版（本仓库 fork 自 [docblue/chfsgui](https://github.com/docblue/chfsgui)）
 
 ## 简介
 
-CuteHttpFileServer/chfs 是一个免费的、HTTP 协议的文件共享服务器，使用浏览器可以快速访问。特点：
+CuteHttpFileServer/chfs 是一个免费的、HTTP 协议的文件共享服务器，使用浏览器即可快速访问。特点：
 
 - 单个文件，核心功能无需其他文件
 - 跨平台运行，支持主流平台：Windows、Linux 和 Mac
@@ -17,9 +17,7 @@ CuteHttpFileServer/chfs 是一个免费的、HTTP 协议的文件共享服务器
 - 支持快速分享文字片段
 - 支持 WebDAV 协议
 
-与其他常用文件共享方式（如 FTP、飞秋、网盘、自己建站）相比，具有使用简单、适用场景更多的优点，在个人使用以及共享给他人的场景中非常方便快捷。
-
-![简介及下载](docs/screenshot-download.png)
+与其他常用文件共享方式（FTP、飞秋、网盘、自己建站）相比，chfs 使用简单、适用场景更广，无论是个人使用还是共享给他人，都非常方便快捷。
 
 ## 下载
 
@@ -55,7 +53,7 @@ CuteHttpFileServer/chfs 是一个免费的、HTTP 协议的文件共享服务器
 
 ### 2. 命令行方式（CLI）
 
-程序是控制台程序，可直接双击运行，或在命令行中运行。通过参数配置：
+chfs 是控制台程序，可直接双击运行，也可在命令行中通过参数配置：
 
 ```
 usage: chfs.exe [<options>]
@@ -81,11 +79,11 @@ usage: chfs.exe [<options>]
 
 然后在浏览器访问 `http://<本机IP>:8080` 即可，手机扫码也可访问。
 
-**Windows 小技巧**：可下载注册表模板，编辑 chfs.exe 路径后双击导入，即可通过右键菜单快捷共享目录。
+**Windows 小技巧**：下载注册表模板，编辑其中的 chfs.exe 路径后双击导入，即可通过右键菜单快捷共享目录。
 
 ### 3. 以系统服务运行（Windows + NSSM）
 
-chfs 本身不是服务程序，需借助 [NSSM](http://www.nssm.cc/download) 注册为系统服务：
+chfs 本身不是服务程序，如需作为系统服务常驻，可借助 [NSSM](http://www.nssm.cc/download) 注册：
 
 ```
 1. 将 chfs.exe 放在指定目录，如 d:\program\cutehttpfileserver
@@ -98,11 +96,9 @@ chfs 本身不是服务程序，需借助 [NSSM](http://www.nssm.cc/download) �
 
 ### 4. 高级用法
 
-**启用 HTTPS**：在配置文件中设置 `ssl.cert` 和 `ssl.key` 两个键值指向证书文件。注意：证书格式与 nginx 兼容；最低支持 TLS 1.0；推荐监听 443 端口。
+**启用 HTTPS**：在配置文件中设置 `ssl.cert` 和 `ssl.key` 两个键值，指向对应的证书文件。注意：证书格式与 nginx 兼容；最低支持 TLS 1.0；推荐监听 443 端口。
 
 **启用 WebDAV**：程序默认支持 WebDAV，与 HTTP 共用同一套访问规则，地址为 `http://host:port/webdav`。
-
-![用法](docs/screenshot-usage.png)
 
 ## 版本更新说明
 
@@ -136,8 +132,6 @@ chfs 本身不是服务程序，需借助 [NSSM](http://www.nssm.cc/download) �
 - 增加全局搜索文件功能
 
 </details>
-
-![版本更新说明](docs/screenshot-changelog.png)
 
 ## 原作者与致谢
 
