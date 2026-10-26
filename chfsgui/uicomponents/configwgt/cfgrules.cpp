@@ -42,8 +42,9 @@ CfgRules::CfgRules(QWidget *parent) : CfgBase(parent)
     });
     connect(_btnAccRemove,&QPushButton::clicked,[=](){
         auto item = _accList->currentItem();
+        if(!item){return;}
         auto currentUser = item->data(Qt::UserRole).toString();
-        if(item && currentUser!=GUESTUSER){
+        if(currentUser!=GUESTUSER){
             QMessageBox::StandardButton chosen = QMessageBox::question(this,tr("警告"),tr("确定删除所选账户？"));
             if( chosen == QMessageBox::Yes ){
                 delete _accList->takeItem(_accList->currentRow());
@@ -117,20 +118,17 @@ void CfgRules::resizeTreeColumn()
 void CfgRules::createContents()
 {
     _accList = new QListWidget(this);
-    QVBoxLayout* accLayout = new QVBoxLayout;
-    accLayout->setMargin(0);
-    accLayout->addWidget( new QLabel(tr("账户:"),this) );
-    accLayout->addWidget( _accList, 1 );
+    _accList->setMinimumWidth(100);
 
     _btnAccNew = new QPushButton(tr("添加"),this);
     _btnAccRemove = new QPushButton(tr("删除"),this);
     _btnAccModify = new QPushButton(tr("修改"),this);
-    QVBoxLayout* ctrlAccLayout = new QVBoxLayout;
+    QHBoxLayout* ctrlAccLayout = new QHBoxLayout;
     ctrlAccLayout->setMargin(0);
-    ctrlAccLayout->addSpacing(21);//暂时就这样简单处理
-    ctrlAccLayout->addWidget( _btnAccNew );
-    ctrlAccLayout->addWidget( _btnAccRemove );
-    ctrlAccLayout->addWidget( _btnAccModify );
+    ctrlAccLayout->setSpacing(6);
+    ctrlAccLayout->addWidget(_btnAccNew);
+    ctrlAccLayout->addWidget(_btnAccRemove);
+    ctrlAccLayout->addWidget(_btnAccModify);
     ctrlAccLayout->addStretch(1);
 
     _accessTree = new QTreeWidget(this);
@@ -139,16 +137,20 @@ void CfgRules::createContents()
     QTreeWidgetItem* itemHeader = new QTreeWidgetItem(QStringList{tr("目录"),tr("权限")});
     itemHeader->setIcon(0,QIcon(":/res/image/dir.svg"));
     itemHeader->setIcon(1,QIcon(":/res/image/mask.svg"));
-    _accessTree->setHeaderItem( itemHeader );
+    _accessTree->setHeaderItem(itemHeader);
     _accessTree->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
-    QHBoxLayout* mainLayout = new QHBoxLayout(this);
+    QHBoxLayout* accountsLayout = new QHBoxLayout;
+    accountsLayout->setMargin(0);
+    accountsLayout->setSpacing(6);
+    accountsLayout->addWidget(_accList, 1);
+    accountsLayout->addWidget(_accessTree, 3);
+
+    QVBoxLayout* mainLayout = new QVBoxLayout(this);
     mainLayout->setMargin(0);
-    mainLayout->addLayout( accLayout, 4 );
-    mainLayout->addLayout( ctrlAccLayout );
-    mainLayout->addStretch(2);
-    mainLayout->addWidget( _accessTree, 10 );
-    mainLayout->addStretch(1);
+    mainLayout->setSpacing(6);
+    mainLayout->addLayout(ctrlAccLayout);
+    mainLayout->addLayout(accountsLayout, 1);
 }
 
 void CfgRules::onEditorMode()

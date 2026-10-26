@@ -1,4 +1,2 @@
-#include <windows.h>
-
-IDI_ICON1    ICON    DISCARDABLE     ".\\res\\image\\logo.ico"
+IDI_ICON1    ICON    DISCARDABLE     "./res/image/logo.ico"
 

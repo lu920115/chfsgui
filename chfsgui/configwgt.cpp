@@ -5,11 +5,15 @@
 #include "uicomponents/configwgt/cfgrules.h"
 #include "uicomponents/configwgt/cfgportwgt.h"
 
+#include <QListWidget>
+#include <QScrollArea>
+#include <QScrollBar>
+#include <QTimer>
 
 ConfigWgt::ConfigWgt(QWidget *parent) : QWidget(parent)
 {
     createComponents();
-    setProperty("form","true");
+    setProperty("form", "true");
 }
 
 void ConfigWgt::paintEvent(QPaintEvent *)
@@ -22,89 +26,115 @@ void ConfigWgt::paintEvent(QPaintEvent *)
 
 void ConfigWgt::onEditorMode()
 {
-    CfgBase* ws[]{_sharedpathWgt,_allowWgt,_rulesWgt,_portWgt};
-    for(auto i : ws){
-        i->onEditorMode();
-    }
+    CfgBase* ws[]{_sharedpathWgt, _allowWgt, _rulesWgt, _portWgt};
+    for (auto i : ws) i->onEditorMode();
+    for (auto w : _advancedWgts) w->setRunning(false);
 }
 
 void ConfigWgt::onRunningMode()
 {
-    CfgBase* ws[]{_sharedpathWgt,_allowWgt,_rulesWgt,_portWgt};
-    for(auto i : ws){
-        i->onRunningMode();
-    }
+    CfgBase* ws[]{_sharedpathWgt, _allowWgt, _rulesWgt, _portWgt};
+    for (auto i : ws) i->onRunningMode();
+    for (auto w : _advancedWgts) w->setRunning(true);
 }
 
+QWidget *ConfigWgt::createSection(const QString &title, QWidget *content)
+{
+    QWidget *section = new QWidget(_pageContent);
+    section->setObjectName("chfsConfigSection");
+    QLabel *heading = new QLabel(title, section);
+    heading->setObjectName("chfsConfigSectionTitle");
+    heading->setStyleSheet(
+        "QLabel#chfsConfigSectionTitle{font-size:15px;font-weight:600;"
+        "padding:3px 0 8px 0;color:#E8E8E8;}"
+    );
+    QVBoxLayout *layout = new QVBoxLayout(section);
+    layout->setContentsMargins(14, 10, 16, 14);
+    layout->setSpacing(4);
+    layout->addWidget(heading);
+    layout->addWidget(content);
+    return section;
+}
+
+void ConfigWgt::addNavigationSection(const QString &name, QWidget *content)
+{
+    QWidget *section = createSection(name, content);
+    _navigation->addItem(name);
+    _sections.append(section);
+    _pageLayout->addWidget(section);
+}
+
+void ConfigWgt::addAdvancedSection(const QString &name, AdvancedConfigWgt::Section section)
+{
+    AdvancedConfigWgt *content = new AdvancedConfigWgt(section, _pageContent);
+    _advancedWgts.append(content);
+    addNavigationSection(name, content);
+}
+
+void ConfigWgt::scrollToSection(int row)
+{
+    if (row < 0 || row >= _sections.count()) return;
+    QWidget *target = _sections.at(row);
+    QTimer::singleShot(0, this, [this, target]() {
+        _scrollArea->verticalScrollBar()->setValue(target->y());
+    });
+}
 
 void ConfigWgt::createComponents()
 {
-    const int ITEM_LEFT_OFFSET = 26;
-
     _sharedpathWgt = new CfgSharedpathWgt(this);
     _allowWgt = new CfgAllowip(this);
     _rulesWgt = new CfgRules(this);
     _portWgt = new CfgPortWgt(this);
 
-    // 共享目录
+    _navigation = new QListWidget(this);
+    _navigation->setObjectName("chfsOfficialNavigation");
+    _navigation->setFixedWidth(108);
+    _navigation->setSpacing(2);
+    _navigation->setFrameShape(QFrame::NoFrame);
+    _navigation->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    _navigation->setFocusPolicy(Qt::NoFocus);
+    _navigation->setStyleSheet(
+        "QListWidget#chfsOfficialNavigation{background:transparent;border:0;outline:0;padding:4px 3px;}"
+        "QListWidget#chfsOfficialNavigation::item{height:30px;padding-left:8px;border:0;border-radius:2px;}"
+        "QListWidget#chfsOfficialNavigation::item:selected{background:#3D6E75;color:#FFFFFF;}"
+        "QListWidget#chfsOfficialNavigation::item:hover:!selected{background:#454B4D;}"
+    );
 
-    QHBoxLayout* pathLabelLayout = new QHBoxLayout;
-    pathLabelLayout->addWidget(new QLabel(tr("共享目录"),this));
-    pathLabelLayout->addStretch(1);
+    _scrollArea = new QScrollArea(this);
+    _scrollArea->setWidgetResizable(true);
+    _scrollArea->setFrameShape(QFrame::NoFrame);
+    _scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    _scrollArea->setAlignment(Qt::AlignTop);
 
-    QHBoxLayout* pathLayout = new QHBoxLayout;
-    pathLayout->setContentsMargins(ITEM_LEFT_OFFSET,0,0,0);
-    pathLayout->addWidget(_sharedpathWgt,1);
+    _pageContent = new QWidget(_scrollArea);
+    _pageLayout = new QVBoxLayout(_pageContent);
+    _pageLayout->setContentsMargins(0, 0, 4, 0);
+    _pageLayout->setSpacing(4);
 
-    //监听端口
+    addNavigationSection(tr("共享目录"), _sharedpathWgt);
+    addNavigationSection(tr("监听端口"), _portWgt);
+    addNavigationSection(tr("账户控制"), _rulesWgt);
+    addAdvancedSection(tr("页面定制"), AdvancedConfigWgt::PageCustomize);
+    addNavigationSection(tr("地址过滤"), _allowWgt);
+    addAdvancedSection(tr("SSL/https"), AdvancedConfigWgt::SslHttps);
+    addAdvancedSection(tr("图片预览"), AdvancedConfigWgt::ImagePreview);
+    addAdvancedSection(tr("目录下载"), AdvancedConfigWgt::FolderDownload);
+    addAdvancedSection(tr("文件删除"), AdvancedConfigWgt::FileRemove);
+    addAdvancedSection(tr("会话时长"), AdvancedConfigWgt::SessionTimeout);
+    addAdvancedSection(tr("页面二维码"), AdvancedConfigWgt::PageQrCode);
+    addAdvancedSection(tr("更新"), AdvancedConfigWgt::SoftwareUpdate);
 
-    QHBoxLayout* portLabelLayout = new QHBoxLayout;
-    portLabelLayout->addWidget(new QLabel(tr("监听端口"),this));
-    portLabelLayout->addStretch(1);
+    _pageLayout->addStretch(1);
+    _scrollArea->setWidget(_pageContent);
 
-    QHBoxLayout* portLayout = new QHBoxLayout;
-    portLayout->setContentsMargins(ITEM_LEFT_OFFSET,0,0,0);    
-    portLayout->addWidget( _portWgt );
-    portLayout->addStretch(1);
+    connect(_navigation, &QListWidget::currentRowChanged,
+            this, &ConfigWgt::scrollToSection);
+    _navigation->setCurrentRow(0);
 
-
-    // 账户控制
-
-    QHBoxLayout* rulesLabelLayout = new QHBoxLayout;
-    rulesLabelLayout->addWidget(new QLabel(tr("账户控制"),this));
-    rulesLabelLayout->addStretch(1);
-
-    QHBoxLayout* rulesLayout = new QHBoxLayout;
-    rulesLayout->setContentsMargins(ITEM_LEFT_OFFSET,0,0,0);
-    rulesLayout->addWidget(_rulesWgt,1);
-
-
-    // 地址过滤
-
-    QHBoxLayout* allowLabelLayout = new QHBoxLayout;
-    allowLabelLayout->addWidget(new QLabel(tr("地址过滤"),this));
-    allowLabelLayout->addStretch(1);
-
-    QHBoxLayout* allowLayout = new QHBoxLayout;
-    allowLayout->setContentsMargins(ITEM_LEFT_OFFSET,0,0,0);
-    allowLayout->addWidget(_allowWgt,1);
-
-
-    QVBoxLayout* mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(5,0,5,0);
-    mainLayout->setSpacing(6);
-    mainLayout->addSpacing(12);
-    mainLayout->addLayout(pathLabelLayout);
-    mainLayout->addLayout(pathLayout);
-    mainLayout->addSpacing(12);
-    mainLayout->addLayout(portLabelLayout);
-    mainLayout->addLayout(portLayout);
-    mainLayout->addSpacing(12);
-    mainLayout->addLayout(rulesLabelLayout);
-    mainLayout->addLayout(rulesLayout, 2);
-    mainLayout->addSpacing(12);
-    mainLayout->addLayout(allowLabelLayout);
-    mainLayout->addLayout(allowLayout, 1);
-    mainLayout->addSpacing(6);
+    QHBoxLayout *mainLayout = new QHBoxLayout(this);
+    mainLayout->setContentsMargins(4, 4, 4, 4);
+    mainLayout->setSpacing(8);
+    mainLayout->addWidget(_navigation);
+    mainLayout->addWidget(_scrollArea, 1);
 }
-

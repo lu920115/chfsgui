@@ -4,6 +4,9 @@
 #include <QMenu>
 #include "mainwindow.h"
 #include "aboutdlg.h"
+#include "appprotection.h"
+#include "updatemanager.h"
+#include "desktopshortcut.h"
 #include <QTimer>
 #include <QFileDialog>
 
@@ -51,12 +54,67 @@ Toolbar::Toolbar(QWidget *parent) : QWidget(parent)
 
 void Toolbar::createActions()
 {
-    QMenu* menu = new QMenu;
+    _updateManager = new UpdateManager(this);
+    QMenu* menu = new QMenu(this);
 
     extern SomeActions someActions;
     someActions.autoRunAction = menu->addAction(tr("开机启动"),this,SIGNAL(sigAutorunSwitching(bool)));
     someActions.autoRunAction->setCheckable(true);
     someActions.autoRunAction->setChecked( !QSettings(APPDOMAIN, QString(APPKEY)+"/run").value(AUTORUNFORBIDDEN).toBool() );
+
+    QMenu *protectionMenu = menu->addMenu(tr("密码保护"));
+    QAction *enableProtection = protectionMenu->addAction(tr("开启保护"));
+    QAction *changeProtection = protectionMenu->addAction(tr("修改密码"));
+    QAction *disableProtection = protectionMenu->addAction(tr("关闭保护"));
+    auto refreshProtection = [=]() {
+        const bool enabled = AppProtection::isEnabled();
+        enableProtection->setVisible(!enabled);
+        changeProtection->setVisible(enabled);
+        disableProtection->setVisible(enabled);
+    };
+    connect(enableProtection, &QAction::triggered, this, [=]() {
+        AppProtection::enable(this);
+        refreshProtection();
+    });
+    connect(changeProtection, &QAction::triggered, this, [=]() {
+        AppProtection::changePassword(this);
+        refreshProtection();
+    });
+    connect(disableProtection, &QAction::triggered, this, [=]() {
+        AppProtection::disable(this);
+        refreshProtection();
+    });
+    refreshProtection();
+
+    menu->addSeparator();
+    QMenu *updateMenu = menu->addMenu(tr("软件更新"));
+    QAction *checkUpdate = updateMenu->addAction(tr("检查更新"));
+    QAction *autoCheck = updateMenu->addAction(tr("启动时自动检查"));
+    autoCheck->setCheckable(true);
+    autoCheck->setChecked(_updateManager->autoCheckEnabled());
+    connect(checkUpdate, &QAction::triggered, this, [=]() {
+        _updateManager->checkForUpdates(false);
+    });
+    connect(autoCheck, &QAction::triggered, this, [=](bool checked) {
+        _updateManager->setAutoCheckEnabled(checked);
+    });
+
+    QAction *createShortcuts = menu->addAction(tr("创建桌面快捷方式"));
+    connect(createShortcuts, &QAction::triggered, this, [=]() {
+        QString error;
+        if (DesktopShortcut::create(&error)) {
+            QMessageBox::information(this, tr("桌面快捷方式"),
+                tr("已创建程序图标和“CHFS 共享网页”图标。\n网页图标会在打开时获取当前服务地址，更换 Wi-Fi 后无需重新创建。"));
+        } else {
+            QMessageBox::warning(this, tr("桌面快捷方式"), error);
+        }
+    });
+
+    QTimer::singleShot(4000, this, [=]() {
+        if (_updateManager->autoCheckEnabled() && !UpdateManager::repository().isEmpty()) {
+            _updateManager->checkForUpdates(true);
+        }
+    });
 
     menu->addSeparator();
     QAction* aboutAct = menu->addAction(tr("关于"));

@@ -19,7 +19,10 @@ AboutDlg::AboutDlg(QWidget *parent) :
     ui->setupUi(this);
     setWindowFlags(windowFlags()&~Qt::WindowContextHelpButtonHint);
 
-    ui->_lbTitle->setText( QString("<h2>CHFS GUI v%1.%2</h2>").arg(getCHFSver()).arg(GUIVER) );
+    const QString appTitle = parentWidget()
+        ? parentWidget()->window()->windowTitle()
+        : QStringLiteral("Cute HTTP File Server 3.1 二维码增强版");
+    ui->_lbTitle->setText(QString("<h2>%1</h2>").arg(appTitle.toHtmlEscaped()));
 }
 
 AboutDlg::~AboutDlg()

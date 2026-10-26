@@ -1,4 +1,5 @@
 #include "processdecorator.h"
+#include "qrconfig.h"
 #include <QFile>
 #include <QDir>
 #include <QDebug>
@@ -40,5 +41,6 @@ QString ProcessDecorator::makeCHFS()const
 void ProcessDecorator::clearCHFS()const
 {
     QFile::remove(g_chfsfile);
+    removeQrConfig();
 }
 

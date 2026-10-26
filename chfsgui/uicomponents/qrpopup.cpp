@@ -8,7 +8,8 @@ using namespace qrcodegen;
 QRPopup::QRPopup(QWidget *parent) : QWidget(parent)
 {
     setWindowFlags(Qt::ToolTip);
-    setFixedSize(120,120);
+    setAttribute(Qt::WA_ShowWithoutActivating);
+    setFixedSize(180,180);
 }
 
 QRPopup::~QRPopup()
@@ -25,6 +26,7 @@ void QRPopup::encode(QString data)
     QrCode qr1 = QrCode::encodeSegments(segs, QrCode::Ecc::LOW, 5, 5, 2, false);
 
     int size = qr1.getSize() + margin*2;
+    delete painterImage;
     painterImage = new QImage(size,size,QImage::Format_ARGB32_Premultiplied );
     painterImage->fill( Qt::white );
 
@@ -42,6 +44,7 @@ void QRPopup::paintEvent(QPaintEvent * event)
 {
     Q_UNUSED(event)
 
+    if (!painterImage) return;
     QPainter p(this);
     p.drawPixmap(rect(),QPixmap::fromImage(*painterImage));
 }

@@ -3,8 +3,13 @@
 
 #include "uicomponents/qrpopup.h"
 #include <QTextBrowser>
+#include <QStringList>
 #include <QMouseEvent>
 #include <QListWidget>
+#include <QScreen>
+#include <QGuiApplication>
+
+bool hoverQrEnabled();
 
 class MyTextBrowser : public QTextBrowser
 {
@@ -18,19 +23,45 @@ public:
     {
         QTextBrowser::mouseMoveEvent(e);
 
+        if (!hoverQrEnabled()) {
+            QRPopup::instance().hide();
+            _oldAnchor.clear();
+            return;
+        }
+
         QString url = anchorAt(e->pos());
         if( url.isEmpty() ){//关闭QR
             QRPopup::instance().hide();
         }else{
+            QRPopup &popup = QRPopup::instance();
             if( _oldAnchor != url ){//更新QR
-                QRPopup::instance().encode(url);
+                popup.encode(url);
             }
-            //移动QR
-            QRPopup::instance().setGeometry(QRect(e->globalPos()+QPoint(16,16),QRPopup::instance().size()));
-            QRPopup::instance().show();
+            // 默认放在鼠标左上方，并限制在当前屏幕可用区域内。
+            const QPoint cursor = e->globalPos();
+            QPoint position = cursor - QPoint(popup.width() + 16, popup.height() + 16);
+            QScreen *screen = QGuiApplication::screenAt(cursor);
+            if (!screen) screen = QGuiApplication::primaryScreen();
+            if (screen) {
+                const QRect area = screen->availableGeometry();
+                position.setX(qBound(area.left(), position.x(),
+                                     area.right() - popup.width() + 1));
+                position.setY(qBound(area.top(), position.y(),
+                                     area.bottom() - popup.height() + 1));
+            }
+            popup.move(position);
+            popup.show();
+            popup.raise();
         }
 
         _oldAnchor = url;
+    }
+
+    void leaveEvent(QEvent *event) override
+    {
+        QTextBrowser::leaveEvent(event);
+        QRPopup::instance().hide();
+        _oldAnchor.clear();
     }
 
     void mouseReleaseEvent(QMouseEvent * e) override
@@ -73,7 +104,11 @@ class MonitorWgt : public QWidget
 public:
     explicit MonitorWgt(QWidget *parent = 0);
     void paintEvent(QPaintEvent *) override;
+private:
+    QStringList _websiteCandidates;
+    QString _selectedWebsiteUrl;
 signals:
+    void sigWebsiteUrl(const QString &url);
 
 public slots:
 };

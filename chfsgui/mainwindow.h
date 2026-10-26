@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QFrame>
+#include <QString>
 
 
 class Toolbar;
@@ -40,6 +41,9 @@ public:
 
 private:
     MainWindowUIComponents ui;
+    bool _unlocked = false;
+    bool _openWebWhenReady = false;
+    QString _websiteUrl;
 
     MainWindow(QWidget *parent = 0);    
     ~MainWindow();
@@ -53,6 +57,9 @@ public slots:
     void onRunningMode();
     void fireLaunch();
     void onShowWindow();
+    void onRemoteMessage(const QString &message);
+    void openSharedPage();
+    bool unlock();
 signals:
 
 };

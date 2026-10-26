@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file>chfs_resource/chfs.exe</file>
+        <file>chfs_resource/qr-notice.html</file>
     </qresource>
 </RCC>

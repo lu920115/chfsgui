@@ -1,0 +1,147 @@
+<div id="chfsPageTitle" data-fast-image-preview="__CHFS_FAST_IMAGE_PREVIEW__">__CHFS_PAGE_TITLE__</div>
+<div id="chfsUserNotice"><strong>__CHFS_USER_NOTICE__</strong></div>
+<style>
+#chfsFastPreview{position:fixed;inset:0 auto auto 0;width:100vw;max-width:100vw;height:100vh;z-index:12000;display:none;align-items:center;justify-content:center;padding:18px;box-sizing:border-box;background:rgba(0,0,0,.78);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",Arial,sans-serif}
+#chfsFastPreview.chfs-fast-open{display:flex}
+#chfsFastPreview .chfs-fast-dialog{width:calc(100vw - 36px);max-width:920px;max-height:94vh;overflow:auto;padding:18px;border-radius:10px;background:#fff;color:#252A30;box-shadow:0 12px 40px rgba(0,0,0,.35);box-sizing:border-box}
+#chfsFastPreview .chfs-fast-name{margin:0 34px 8px 0;font-size:17px;font-weight:700;word-break:break-all}
+#chfsFastPreview .chfs-fast-meta{margin:0 0 12px;color:#626B73;font-size:13px}
+#chfsFastPreview .chfs-fast-stage{display:flex;min-height:180px;align-items:center;justify-content:center;padding:14px;background:#F2F4F5;border-radius:6px;text-align:center}
+#chfsFastPreview .chfs-fast-image{display:block;width:100%;height:auto;max-width:760px;max-height:56vh;min-width:128px;min-height:128px;margin:0 auto;object-fit:contain;image-rendering:auto}
+@media(min-width:768px){#chfsFastPreview .chfs-fast-dialog{padding:24px}#chfsFastPreview .chfs-fast-stage{min-height:320px}}
+@media(max-width:480px){#chfsFastPreview{padding:10px}#chfsFastPreview .chfs-fast-dialog{width:calc(100vw - 20px);padding:16px}#chfsFastPreview .chfs-fast-stage{min-height:220px;padding:8px}}
+#chfsFastPreview .chfs-fast-error{display:none;padding:22px;color:#7B4C37;font-size:14px}
+#chfsFastPreview .chfs-fast-tip{margin:12px 0;color:#5B646C;font-size:13px;line-height:1.55}
+#chfsFastPreview .chfs-fast-actions{display:flex;flex-wrap:wrap;gap:8px}
+#chfsFastPreview button,#chfsFastPreview a{min-height:38px;padding:8px 14px;border:1px solid #3D6E75;border-radius:5px;background:#fff;color:#315D64;font:14px/1.4 inherit;text-decoration:none;cursor:pointer;box-sizing:border-box}
+#chfsFastPreview .chfs-fast-primary{background:#3D6E75;color:#fff}
+#chfsFastPreview .chfs-fast-close{position:absolute;top:12px;right:12px;width:34px;min-height:34px!important;padding:2px!important;border:0!important;background:transparent!important;color:#4B5359!important;font-size:25px!important}
+#chfsFastPreview .chfs-fast-dialog{position:relative}
+</style>
+<div id="chfsFastPreview" role="dialog" aria-modal="true" aria-labelledby="chfsFastName">
+<div class="chfs-fast-dialog"><button type="button" class="chfs-fast-close" id="chfsFastClose" aria-label="关闭">×</button>
+<div class="chfs-fast-name" id="chfsFastName"></div><p class="chfs-fast-meta" id="chfsFastMeta"></p>
+<div class="chfs-fast-stage"><img class="chfs-fast-image" id="chfsFastImage" alt="轻量预览"><div class="chfs-fast-error" id="chfsFastError">轻量预览不可用，可选择查看原图。</div></div>
+<p class="chfs-fast-tip">当前仅加载缩略图，原图尚未传输。查看原图或下载时才会加载完整文件。</p>
+<div class="chfs-fast-actions"><button type="button" class="chfs-fast-primary" id="chfsFastOriginal">查看原图</button><a id="chfsFastDownload" download>下载原图</a><button type="button" id="chfsFastCancel">继续浏览</button></div>
+</div></div>
+<script>
+(function(){
+var dataNode=document.getElementById("chfsPageTitle");if(!dataNode||dataNode.getAttribute("data-fast-image-preview")!=="1"){return}
+function byId(id){return document.getElementById(id)}
+var overlay=byId("chfsFastPreview"),image=byId("chfsFastImage"),error=byId("chfsFastError"),original="";
+function closePreview(){overlay.className="";image.removeAttribute("src");original="";if(document.body){document.body.style.overflow=""}}
+function openPreview(link){
+ var row=link.closest?link.closest("tr.fileitemTr"):null;if(!row){return}
+ var icon=row.querySelector("img.fileDirIcon");var preview=icon?icon.getAttribute("src"):"";
+ if(preview.indexOf("/chfs/preview?")===-1){preview=""}
+ original=link.href;var cells=row.querySelectorAll("td.fileitem");var size=cells.length>1?cells[1].textContent:"";
+ byId("chfsFastName").textContent=link.textContent||"图片预览";byId("chfsFastMeta").textContent=size?("原图大小："+size.replace(/^\s+|\s+$/g,"")+(preview?" · 当前为轻量预览":" · 此格式无轻量预览")):(preview?"当前为轻量预览":"此格式无轻量预览");
+ byId("chfsFastDownload").href=original;image.removeAttribute("src");error.style.display=preview?"none":"block";image.style.display=preview?"block":"none";error.textContent=preview?"轻量预览不可用，可选择查看原图。":"CHFS 未为此图片格式生成缩略图，可选择查看原图或直接下载。";if(preview){image.src=preview}overlay.className="chfs-fast-open";document.body.style.overflow="hidden"
+}
+image.onerror=function(){image.style.display="none";error.textContent="轻量预览加载失败，可选择查看原图或直接下载。";error.style.display="block"};
+byId("chfsFastClose").onclick=closePreview;byId("chfsFastCancel").onclick=closePreview;
+byId("chfsFastOriginal").onclick=function(){if(original){window.open(original,"_blank","noopener")}};
+overlay.onclick=function(event){if(event.target===overlay){closePreview()}};
+document.addEventListener("keydown",function(event){if(event.key==="Escape"&&overlay.className){closePreview()}},false);
+document.addEventListener("click",function(event){
+ var link=event.target.closest?event.target.closest(".iconFilenameContainer a[href*='/chfs/shared/']"):null;if(!link){return}
+ var name=(link.textContent||"").toLowerCase();if(!/\.(jpe?g|jpe|jfif|pjp|pjpeg|png|apng|gif|bmp|dib|webp|tiff?|svg|ico|avif|hei[cf])$/.test(name)){return}
+ var row=link.closest("tr.fileitemTr");if(!row){return}
+ event.preventDefault();event.stopPropagation();openPreview(link)
+},true);
+})();
+</script>
+<div id="chfsQrHelper" data-default-wifi="__CHFS_WIFI_SSID__" data-wifi-password="__CHFS_WIFI_PASSWORD__" data-password-enabled="__CHFS_WIFI_PASSWORD_ENABLED__" data-enabled="__CHFS_WEB_QR_ENABLED__" style="visibility:hidden">
+<style>
+#qrcode,#qrModal,button.qrcode{display:none!important}
+#chfsPageTitle{margin:0 0 10px;color:#20242A;font:700 22px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",Arial,sans-serif;word-break:break-word}
+#chfsQrHelper[data-enabled="0"]{display:none!important}
+#chfsUserNotice{margin:0 0 14px;padding:12px 16px;border:1px solid #E2C46D;border-radius:6px;background:#FFF9E8;color:#4A402B;font:600 15px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",Arial,sans-serif;white-space:normal;word-break:break-word}
+#chfsUserNotice:empty{display:none}
+#chfsQrHelper{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",Arial,sans-serif;color:#3C403C;font-size:13px;line-height:1.45;box-sizing:border-box}
+#chfsQrHelper *{box-sizing:border-box}
+#chfsQrHelper .chfs-qr-box{width:100%;padding:16px;background:#F0FFF0;border:1.5px solid #3C403C;border-radius:8px;box-shadow:0 3px 16px rgba(0,0,0,.10)}
+#chfsQrHelper .chfs-qr-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;font-size:15px;font-weight:600;letter-spacing:.04em;cursor:move;user-select:none;-webkit-user-select:none;touch-action:none}
+#chfsQrHelper .chfs-qr-drag-hint{font-size:11px;font-weight:400;color:#687268;letter-spacing:0}
+#chfsQrHelper .chfs-qr-canvas{width:176px;height:176px;margin:0 auto 12px;padding:7px;background:#fff;border:1px solid #D8E6D8}
+#chfsQrHelper .chfs-qr-canvas img,#chfsQrHelper .chfs-qr-canvas canvas,#chfsQrHelper .chfs-qr-canvas table{margin:0 auto!important}
+#chfsQrHelper .chfs-qr-url{display:block;margin-bottom:10px;color:#3C403C;font-size:12px;word-break:break-all}
+#chfsQrHelper .chfs-qr-messages{padding-top:10px;border-top:1px solid #D8E6D8;overflow-wrap:anywhere}
+#chfsQrHelper .chfs-qr-wifi{display:block;font-weight:600}
+#chfsQrHelper .chfs-qr-browser-tip{display:block;margin-top:7px;font-size:12px;font-weight:400}
+#chfsQrHelper .chfs-qr-password-row{display:none!important;margin-top:9px}
+#chfsQrHelper[data-password-enabled="1"] .chfs-qr-password-row{display:block!important}
+#chfsQrHelper .chfs-qr-password{display:none;margin:0 0 7px;padding:7px;border:1px solid #D8E6D8;background:#fff;font-weight:600;overflow-wrap:anywhere}
+#chfsQrHelper .chfs-qr-actions{display:flex;justify-content:flex-end;gap:6px;margin-top:10px;text-align:right}
+#chfsQrHelper button{min-height:30px;padding:4px 12px;border:1.5px solid #3C403C;border-radius:999px;background:#fff;color:#3C403C;font:12px/1.4 inherit;cursor:pointer}
+#chfsQrHelper button:hover,#chfsQrHelper button:focus{background:#D8E6D8;outline-color:#3C403C}
+#chfsQrHelper .chfs-qr-settings{display:none;margin-top:12px;padding-top:12px;border-top:1px solid #D8E6D8;text-align:left}
+#chfsQrHelper .chfs-qr-field{display:block;margin-bottom:9px;font-size:12px}
+#chfsQrHelper .chfs-qr-field span{display:block;margin-bottom:3px}
+#chfsQrHelper input{width:100%;height:31px;padding:4px 7px;border:1.5px solid #3C403C;border-radius:4px;background:#fff;color:#3C403C;font:12px/1.4 inherit}
+#chfsQrHelper input:focus{background:#F0FFF0;outline-color:#3C403C}
+#chfsQrHelper .chfs-qr-save{margin-right:5px;background:#D8E6D8}
+#chfsQrHelper .chfs-qr-status{min-height:18px;margin-top:7px;font-size:12px}
+#chfsQrHelper .chfs-qr-tip{margin:7px 0 0;color:#3C403C;font-size:11px}
+#chfsQrHelper.chfs-qr-dragged{position:fixed;z-index:10000;margin:0;right:auto;bottom:auto;width:240px}
+@media(min-width:1280px){#chfsQrHelper{position:fixed;z-index:1000;top:132px;right:24px;width:240px;margin:0}}
+@media(max-width:1279px){#chfsQrHelper{position:relative;z-index:1000;width:100%;margin:0 0 18px}#chfsQrHelper .chfs-qr-box{max-width:520px;margin:0 auto}#chfsQrHelper .chfs-qr-head{cursor:default;touch-action:auto}#chfsQrHelper .chfs-qr-drag-hint{display:none}}
+@media(max-width:480px){#chfsQrHelper .chfs-qr-box{padding:14px}}
+</style>
+<div class="chfs-qr-box">
+<div class="chfs-qr-head" id="chfsQrDragHandle" title="按住此处拖动二维码"><span>手机扫码访问</span><span class="chfs-qr-drag-hint">按住拖动</span></div>
+<div class="chfs-qr-canvas" id="chfsQrCanvas"></div>
+<a class="chfs-qr-url" id="chfsQrUrl" href="#" target="_blank" rel="noopener"></a>
+<div class="chfs-qr-messages"><span class="chfs-qr-wifi" id="chfsQrWifiText"></span><span class="chfs-qr-browser-tip">若上传、下载大文件，请使用浏览器打开此页面。</span><div class="chfs-qr-password-row"><div class="chfs-qr-password" id="chfsQrPasswordText"></div><button type="button" id="chfsQrPasswordButton">显示密码</button></div></div>
+<div class="chfs-qr-actions"><button type="button" id="chfsQrReset" title="恢复默认位置">复位</button><button type="button" id="chfsQrToggle">设置</button></div>
+<div class="chfs-qr-settings" id="chfsQrSettings">
+<label class="chfs-qr-field"><span>Wi-Fi 名称</span><input id="chfsQrWifi" type="text" maxlength="64" placeholder="例如：Home_WiFi"></label>
+<label class="chfs-qr-field"><span>电脑 IP 或域名（留空自动）</span><input id="chfsQrHost" type="text" maxlength="255" placeholder="例如：192.168.3.174"></label>
+<label class="chfs-qr-field"><span>端口（留空自动）</span><input id="chfsQrPort" type="text" inputmode="numeric" maxlength="5" placeholder="例如：80"></label>
+<button type="button" class="chfs-qr-save" id="chfsQrSave">保存</button><button type="button" id="chfsQrAuto">恢复自动地址</button>
+<div class="chfs-qr-status" id="chfsQrStatus"></div>
+<p class="chfs-qr-tip">设置与拖动位置保存在当前浏览器。手机与电脑需连接同一局域网。</p>
+</div>
+</div>
+<script>
+(function(){
+function byId(id){return document.getElementById(id)}
+var qrPanel=byId("chfsQrHelper");if(!qrPanel||qrPanel.getAttribute("data-enabled")!=="1"){return}
+function read(key){try{return window.localStorage.getItem(key)||""}catch(e){return""}}
+function write(key,value){try{window.localStorage.setItem(key,value);return true}catch(e){return false}}
+function remove(key){try{window.localStorage.removeItem(key)}catch(e){}}
+function defaultWifi(){var panel=byId("chfsQrHelper");return panel?panel.getAttribute("data-default-wifi")||"":""}
+function autoHost(){return window.location.hostname||""}
+function autoPort(){return window.location.port||(window.location.protocol==="https:"?"443":"80")}
+function isDesktop(){return window.innerWidth>=1280}
+function cleanHost(value){value=value.replace(/^\s+|\s+$/g,"");value=value.replace(/^https?:\/\//i,"");value=value.replace(/[\/?#].*$/,"");return value}
+function currentUrl(){var host=cleanHost(read("chfsQrHost"))||autoHost();var port=read("chfsQrPort").replace(/[^0-9]/g,"")||autoPort();var defaultPort=window.location.protocol==="https:"?"443":"80";var authority=host;if(host.indexOf(":")>-1&&host.charAt(0)!=="["){authority="["+host+"]"}if(port&&port!==defaultPort){authority+=":"+port}return window.location.protocol+"//"+authority+"/"}
+function render(){var url=currentUrl();var wifi=read("chfsQrWifi").replace(/^\s+|\s+$/g,"")||defaultWifi();var link=byId("chfsQrUrl");link.innerHTML="";link.appendChild(document.createTextNode(url));link.href=url;var message=byId("chfsQrWifiText");message.innerHTML="";message.appendChild(document.createTextNode(wifi?"请连接 Wi-Fi："+wifi+" 后使用微信扫码":"请连接当前电脑使用的 Wi-Fi 后使用微信扫码"));var canvas=byId("chfsQrCanvas");canvas.innerHTML="";if(window.QRCode){new QRCode(canvas,{text:url,width:162,height:162,colorDark:"#3C403C",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M})}else{canvas.appendChild(document.createTextNode("二维码组件加载中……"))}}
+function readPosition(){var raw=read("chfsQrPosition");if(!raw){return null}try{var p=JSON.parse(raw);if(p&&isFinite(p.left)&&isFinite(p.top)){return p}}catch(e){}return null}
+function clampPosition(left,top,width,height){var maxLeft=Math.max(0,window.innerWidth-width);var maxTop=Math.max(0,window.innerHeight-height);return{left:Math.max(0,Math.min(left,maxLeft)),top:Math.max(0,Math.min(top,maxTop))}}
+function applyPosition(p){var panel=byId("chfsQrHelper");if(!panel||!p||!isDesktop()){return}panel.classList.add("chfs-qr-dragged");panel.style.width=(p.width||240)+"px";var point=clampPosition(Number(p.left),Number(p.top),panel.offsetWidth,panel.offsetHeight);panel.style.left=point.left+"px";panel.style.top=point.top+"px";panel.style.right="auto";panel.style.bottom="auto"}
+function placePanel(){var panel=byId("chfsQrHelper");var main=byId("maincontainer");if(!panel||!main){return}var handle=byId("chfsQrDragHandle");if(handle){handle.title=isDesktop()?"按住此处拖动二维码":"手机和平板固定在文件底部"}if(!isDesktop()){panel.classList.remove("chfs-qr-dragged");panel.style.left="";panel.style.top="";panel.style.right="";panel.style.bottom="";panel.style.width="";var footer=main.getElementsByTagName("footer")[0];if(footer){main.insertBefore(panel,footer)}else{main.appendChild(panel)}return}var saved=readPosition();if(saved){applyPosition(saved);return}panel.classList.remove("chfs-qr-dragged");panel.style.left="";panel.style.top="";panel.style.right="";panel.style.bottom="";panel.style.width=""}
+var dragState=null;
+function dragStart(event){if(!isDesktop()){return}if(event.type==="mousedown"&&event.button!==0){return}var panel=byId("chfsQrHelper");var rect=panel.getBoundingClientRect();var point=event.touches?event.touches[0]:event;dragState={dx:point.clientX-rect.left,dy:point.clientY-rect.top,width:rect.width};panel.classList.add("chfs-qr-dragged");panel.style.width=rect.width+"px";panel.style.left=rect.left+"px";panel.style.top=rect.top+"px";panel.style.right="auto";if(event.preventDefault){event.preventDefault()}if(document.addEventListener){document.addEventListener("mousemove",dragMove,false);document.addEventListener("mouseup",dragEnd,false);document.addEventListener("touchmove",dragMove,false);document.addEventListener("touchend",dragEnd,false)}}
+function dragMove(event){if(!dragState){return}var point=event.touches?event.touches[0]:event;var panel=byId("chfsQrHelper");var next=clampPosition(point.clientX-dragState.dx,point.clientY-dragState.dy,panel.offsetWidth,panel.offsetHeight);panel.style.left=next.left+"px";panel.style.top=next.top+"px";if(event.preventDefault){event.preventDefault()}}
+function dragEnd(){if(!dragState){return}var panel=byId("chfsQrHelper");write("chfsQrPosition",JSON.stringify({left:parseInt(panel.style.left,10)||0,top:parseInt(panel.style.top,10)||0,width:dragState.width}));dragState=null;if(document.removeEventListener){document.removeEventListener("mousemove",dragMove,false);document.removeEventListener("mouseup",dragEnd,false);document.removeEventListener("touchmove",dragMove,false);document.removeEventListener("touchend",dragEnd,false)}}
+function resetPosition(){remove("chfsQrPosition");placePanel()}
+function hideNativeQr(){var nativeQr=byId("qrcode");var panel=byId("chfsQrHelper");if(nativeQr&&panel&&!panel.contains(nativeQr)){nativeQr.style.display="none"}}
+function init(){var panel=byId("chfsQrHelper");if(!panel){return}if(!panel.getAttribute("data-ready")){panel.setAttribute("data-ready","1");byId("chfsQrWifi").value=read("chfsQrWifi")||defaultWifi();byId("chfsQrHost").value=read("chfsQrHost");byId("chfsQrPort").value=read("chfsQrPort");byId("chfsQrToggle").onclick=function(){var box=byId("chfsQrSettings");var open=box.style.display==="block";box.style.display=open?"none":"block";this.innerHTML=open?"设置":"收起"};byId("chfsQrReset").onclick=resetPosition;byId("chfsQrSave").onclick=function(){var port=byId("chfsQrPort").value.replace(/[^0-9]/g,"");if(port&&(Number(port)<1||Number(port)>65535)){byId("chfsQrStatus").innerHTML="端口需为 1～65535";return}var host=cleanHost(byId("chfsQrHost").value);write("chfsQrWifi",byId("chfsQrWifi").value.replace(/^\s+|\s+$/g,""));write("chfsQrHost",host);write("chfsQrPort",port);byId("chfsQrHost").value=host;byId("chfsQrPort").value=port;byId("chfsQrStatus").innerHTML="已保存";render()};byId("chfsQrAuto").onclick=function(){remove("chfsQrHost");remove("chfsQrPort");byId("chfsQrHost").value="";byId("chfsQrPort").value="";byId("chfsQrStatus").innerHTML="已恢复自动地址";render()};byId("chfsQrPasswordButton").onclick=function(){var text=byId("chfsQrPasswordText");var showing=text.style.display==="block";if(showing){text.style.display="none";this.innerHTML="显示密码";return}var password=panel.getAttribute("data-wifi-password")||"";text.textContent=password?("Wi-Fi 密码："+password):"未能读取密码：可能为开放网络、有线连接，或 Windows 未授权读取。";text.style.display="block";this.innerHTML="隐藏密码"};var handle=byId("chfsQrDragHandle");if(handle.addEventListener){handle.addEventListener("mousedown",dragStart,false);handle.addEventListener("touchstart",dragStart,false)}if(window.addEventListener){window.addEventListener("resize",placePanel)}}render();placePanel();hideNativeQr();panel.style.visibility="visible"}
+init();
+if(window.addEventListener){window.addEventListener("load",function(){render();placePanel();hideNativeQr()})}else if(window.attachEvent){window.attachEvent("onload",function(){render();placePanel();hideNativeQr()})}
+})();
+</script>
+</div>
+<script>
+(function(){
+function prepareBinary(link){
+ if(!link){return}var name=(link.textContent||"").toLowerCase();if(!/\.(exe|msi|apk|zip|rar|7z|iso|cab|tar|gz)$/.test(name)){return}
+ var row=link.closest("tr.fileitemTr");var cells=row?row.querySelectorAll("td.fileitem"):[];var size=cells.length>1?cells[1].textContent.replace(/^\s+|\s+$/g,""):"";
+ link.setAttribute("download","");link.title=size?("下载原文件（"+size+"）"):"下载原文件"
+}
+function binaryEvent(event){var link=event.target.closest?event.target.closest(".iconFilenameContainer a[href*='/chfs/shared/']"):null;prepareBinary(link)}
+document.addEventListener("mouseover",binaryEvent,true);document.addEventListener("click",binaryEvent,true);
+})();
+</script>

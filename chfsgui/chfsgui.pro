@@ -14,12 +14,16 @@ TEMPLATE = app
 RC_FILE += app.rc
 QTPLUGIN  += qsvg
 PRECOMPILED_HEADER = preCompile.h
-CONFIG += c++11
+CONFIG += c++11 windows
 
 DEFINES += "GUIVER=1"
 
 SOURCES += main.cpp\
         mainwindow.cpp \
+    appprotection.cpp \
+    updatemanager.cpp \
+    desktopshortcut.cpp \
+    qrconfig.cpp \
     processdecorator.cpp \
     toolbar.cpp \
     configwgt.cpp \
@@ -30,6 +34,7 @@ SOURCES += main.cpp\
     utilities.cpp \
     uicomponents/configwgt/cfgportwgt.cpp \
     uicomponents/configwgt/cfgbase.cpp \
+    uicomponents/configwgt/advancedconfigwgt.cpp \
     uicomponents/configwgt/accdlg.cpp \
     uicomponents/configwgt/ruletablewidget.cpp \
     aboutdlg.cpp \
@@ -44,6 +49,11 @@ SOURCES += main.cpp\
     qtsingleapplication/qtlockedfile_win.cpp
 
 HEADERS  += mainwindow.h \
+    appprotection.h \
+    appversion.h \
+    updatemanager.h \
+    desktopshortcut.h \
+    qrconfig.h \
     processdecorator.h \
     precompile.h \
     toolbar.h \
@@ -55,6 +65,7 @@ HEADERS  += mainwindow.h \
     utilities.h \
     uicomponents/configwgt/cfgportwgt.h \
     uicomponents/configwgt/cfgbase.h \
+    uicomponents/configwgt/advancedconfigwgt.h \
     uicomponents/configwgt/accdlg.h \
     uicomponents/configwgt/ruletablewidget.h \
     aboutdlg.h \
@@ -69,8 +80,13 @@ HEADERS  += mainwindow.h \
 RESOURCES += \
     chfs.qrc \
     gui.qrc \
-    BreezeStyleSheets\breeze.qrc \
+    BreezeStyleSheets/breeze.qrc \
     skin/qss.qrc
 
 FORMS += \
     aboutdlg.ui
+
+win32:LIBS += -lwlanapi
+win32:QMAKE_LIBS += -lwinpthread
+win32:QMAKE_LIBS += -Wl,--start-group -lQt5EventDispatcherSupport -lQt5FontDatabaseSupport -lQt5ThemeSupport -lQt5AccessibilitySupport -lQt5VulkanSupport -lQt5WindowsUIAutomationSupport -lQt5PlatformCompositorSupport -lQt5Svg -lqtlibjpeg -lQt5Widgets -lQt5Gui -lQt5Network -lQt5Core -Wl,--end-group -lwtsapi32
+win32:QMAKE_LIBDIR += $$[QT_INSTALL_LIBS]

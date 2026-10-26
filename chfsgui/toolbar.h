@@ -6,6 +6,7 @@ class QToolButton;
 class QAction;
 class QLabel;
 class QCheckBox;
+class UpdateManager;
 
 
 struct ToolbarActions{
@@ -32,6 +33,7 @@ private:
     QToolButton* _btnMenu;
     QToolButton* _btnSave;
     QCheckBox* _btnAuto;
+    UpdateManager *_updateManager;
 signals:
     void sigEditorMode();
     void sigRunningMode();

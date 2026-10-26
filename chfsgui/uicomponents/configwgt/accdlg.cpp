@@ -136,12 +136,12 @@ void AccDlg::createContents()
     pwdLayout->addWidget( ui.editPwd );
     pwdLayout->addStretch(1);
 
-    ui.cbRead = new QCheckBox(tr("读"),this);
+    ui.cbRead = new QCheckBox(tr("读（下载）"),this);
     ui.cbRead->setChecked(true);
     ui.cbRead->setToolTip(tr("相关操作：浏览 + 下载"));
-    ui.cbWrite = new QCheckBox(tr("写"),this);
-    ui.cbWrite->setToolTip(tr("相关操作：读操作 + 上传 + 创建"));
-    ui.cbDelete = new QCheckBox(tr("删除"),this);
+    ui.cbWrite = new QCheckBox(tr("写（下载、上传、创建、编辑）"),this);
+    ui.cbWrite->setToolTip(tr("相关操作：读操作 + 上传 + 创建 + 编辑"));
+    ui.cbDelete = new QCheckBox(tr("删除（最高访问权限）"),this);
     ui.cbDelete->setToolTip(tr("相关操作：写操作 + 删除"));
     auto maskLayout = new QHBoxLayout;
     maskLayout->addWidget(new QLabel(tr("根目录访问权限："),this));
@@ -195,6 +195,6 @@ void AccDlg::createContents()
     mainLayout->addLayout( menuBtnLayout );
     mainLayout->addStretch(1);
 
-    setMinimumWidth(420);
+    setMinimumWidth(720);
 }
 

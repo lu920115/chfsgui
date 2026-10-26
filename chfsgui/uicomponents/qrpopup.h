@@ -18,7 +18,7 @@ public:
 private:
     explicit QRPopup(QWidget *parent = 0);
     ~QRPopup();
-    QImage* painterImage;
+    QImage* painterImage = nullptr;
 signals:
 
 public slots:

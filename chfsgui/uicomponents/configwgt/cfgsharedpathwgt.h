@@ -2,9 +2,8 @@
 #define CFGSHAREDPATHWGT_H
 #include "cfgbase.h"
 
-class QLineEdit;
+class QListWidget;
 class QPushButton;
-class QLabel;
 
 class CfgSharedpathWgt : public CfgBase
 {
@@ -16,8 +15,14 @@ public:
     virtual void onEditorMode();
     virtual void onRunningMode();
 private:
-    QLineEdit* _editPath;
-    QPushButton* _btnChoose;
+    void addPath(const QString &path);
+    void savePaths();
+    QString selectedPath() const;
+
+    QListWidget *_pathList;
+    QPushButton *_btnAdd;
+    QPushButton *_btnRemove;
+    QPushButton *_btnOpen;
 signals:
 
 public slots:
