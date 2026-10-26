@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
   push:
     paths:
+      - chfsgui/**
       - .github/workflows/build-windows-test.yml
 
 permissions:
@@ -47,6 +48,16 @@ jobs:
           set -euo pipefail
           export PATH='/mingw64/qt5-static/bin:/mingw64/bin':"$PATH"
           mkdir -p build output
+          {
+            printf 'Source commit: %s\n' "$GITHUB_SHA"
+            printf 'GitHub run: %s\n' "$GITHUB_RUN_ID"
+            g++ --version
+            qmake --version
+            make --version | sed -n '1p'
+            pacman -Q mingw-w64-x86_64-qt5-static \
+              mingw-w64-x86_64-openssl mingw-w64-x86_64-zlib \
+              mingw-w64-x86_64-zstd
+          } > output/build-environment.txt
           cd build
           qmake ../chfsgui/chfsgui.pro \
             CONFIG+=release CONFIG-=debug \
@@ -68,13 +79,16 @@ jobs:
             '5ac710185ff59b59293620ab89ea1cc59927c506bb82de128c6e4a4885b6ca1e' \
             'chfsgui/chfs_resource/chfs.exe' | sha256sum -c -
           version="$(sed -n 's/^#define APP_VERSION "\([^"]*\)"$/\1/p' chfsgui/appversion.h)"
-          python - "$version" "output/$TEST_EXE" <<'PY'
+          python - "$version" "output/$TEST_EXE" \
+            chfsgui/chfs_resource/chfs.exe <<'PY'
           import pathlib
           import sys
 
-          version, filename = sys.argv[1:]
+          version, filename, corename = sys.argv[1:]
           data = pathlib.Path(filename).read_bytes()
           assert data[:2] == b'MZ', 'Missing MZ header'
+          assert pathlib.Path(corename).read_bytes() in data, \
+              'Official CHFS core is not embedded byte-for-byte'
           title = f'CHFS 3.1 Qrcode V{version}'
           assert title.encode('utf-16le') in data, 'Missing embedded about title'
           shortcut_text = '创建桌面快捷方式'
@@ -86,7 +100,6 @@ jobs:
         shell: msys2 {0}
         run: |
           set -euo pipefail
-          objdump -p "output/$TEST_EXE" > output/imports.txt
           python - "output/$TEST_EXE" <<'PY'
           import pathlib
           import re
@@ -111,19 +124,36 @@ jobs:
           assert not found_banned, f'Banned Win8+ imports: {found_banned}'
           assert not bad_dlls, f'Unsafe or non-static DLL imports: {bad_dlls}'
           assert 'msvcrt.dll' in dlls, 'Expected direct MSVCRT runtime'
-          print('Static linkage and Win7 import checks: PASS')
-          print('Imported DLLs:', ', '.join(sorted(dlls)))
+
+          report = [f'Test EXE: {filename}', '']
+          header_keys = (
+              'file format', 'architecture', 'Time/Date', 'MajorLinkerVersion',
+              'MinorLinkerVersion', 'SizeOfImage', 'Subsystem', 'DllCharacteristics'
+          )
+          report.extend(
+              line.strip() for line in dump.splitlines()
+              if line.strip().startswith(header_keys)
+          )
+          report.extend(['', 'Static linkage and Win7 import checks: PASS',
+                         'Banned Win8+ symbols: none',
+                         'Unsafe or non-static DLL imports: none',
+                         '', 'Imported DLLs:', *sorted(dlls)])
+          pathlib.Path('output/verification.txt').write_text(
+              '\n'.join(report) + '\n', encoding='utf-8'
+          )
+          print('\n'.join(report))
           PY
           cd output
           sha256sum "$TEST_EXE" > "$TEST_EXE.sha256.txt"
 
       - name: Upload test EXE and verification reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ env.TEST_ARTIFACT }}
           path: |
             output/*.exe
             output/*.sha256.txt
-            output/imports.txt
+            output/verification.txt
+            output/build-environment.txt
           if-no-files-found: error
           retention-days: 14
