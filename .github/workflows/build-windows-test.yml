@@ -16,13 +16,15 @@ jobs:
 
     steps:
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up MSYS2 MINGW64
         uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW64
           update: true
+          # MINGW64/MSVCRT is intentional for Windows 7; do not switch to UCRT64.
+          suppress-deprecation-warnings: msystem-mingw64
           install: >-
             mingw-w64-x86_64-toolchain
             make
@@ -75,7 +77,8 @@ jobs:
           assert data[:2] == b'MZ', 'Missing MZ header'
           title = f'CHFS 3.1 Qrcode V{version}'
           assert title.encode('utf-16le') in data, 'Missing embedded about title'
-          assert b'DesktopShortcuts' in data, 'Missing shortcut settings code'
+          shortcut_text = '创建桌面快捷方式'
+          assert shortcut_text.encode('utf-8') in data, 'Missing shortcut settings UI'
           print(f'PE header and v{version} metadata: OK')
           PY
 
