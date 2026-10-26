@@ -2,6 +2,7 @@
 
 #include "precompile.h"
 #include "updatemanager.h"
+#include "desktopshortcut.h"
 
 #include <QCheckBox>
 #include <QFileDialog>
@@ -24,6 +25,7 @@ AdvancedConfigWgt::AdvancedConfigWgt(Section section, QWidget *parent)
     case FileRemove: buildFileRemove(); break;
     case SessionTimeout: buildSessionTimeout(); break;
     case PageQrCode: buildPageQrCode(); break;
+    case DesktopShortcuts: buildDesktopShortcuts(); break;
     case SoftwareUpdate: buildSoftwareUpdate(); break;
     }
 }
@@ -75,7 +77,6 @@ void AdvancedConfigWgt::buildSslHttps()
     });
 
     QFormLayout *form = new QFormLayout;
-    form->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
     form->addRow(tr("证书："), buildCertificateRow(_sslCertEdit, true));
     form->addRow(tr("密钥："), buildCertificateRow(_sslKeyEdit, false));
 
@@ -242,6 +243,34 @@ void AdvancedConfigWgt::buildPageQrCode()
     mainLayout->addStretch(1);
 }
 
+void AdvancedConfigWgt::buildDesktopShortcuts()
+{
+    QPushButton *create = new QPushButton(tr("创建桌面快捷方式"), this);
+    QLabel *tip = new QLabel(
+        tr("将在桌面创建程序图标和“CHFS 共享网页”图标。网页图标会在打开时获取当前服务地址，更换 Wi-Fi 后无需重新创建。"), this);
+    tip->setWordWrap(true);
+
+    connect(create, &QPushButton::clicked, this, [this]() {
+        QString error;
+        if (DesktopShortcut::create(&error)) {
+            QMessageBox::information(this, tr("桌面快捷方式"),
+                tr("已创建程序图标和“CHFS 共享网页”图标。\n网页图标会在打开时获取当前服务地址，更换 Wi-Fi 后无需重新创建。"));
+        } else {
+            QMessageBox::warning(this, tr("桌面快捷方式"), error);
+        }
+    });
+
+    QHBoxLayout *buttonRow = new QHBoxLayout;
+    buttonRow->addWidget(create);
+    buttonRow->addStretch(1);
+
+    QVBoxLayout *mainLayout = new QVBoxLayout(this);
+    mainLayout->setContentsMargins(16, 18, 16, 12);
+    mainLayout->addLayout(buttonRow);
+    mainLayout->addWidget(tip);
+    mainLayout->addStretch(1);
+}
+
 void AdvancedConfigWgt::buildSoftwareUpdate()
 {
     _updateManager = new UpdateManager(this);
@@ -313,5 +342,5 @@ QWidget *AdvancedConfigWgt::buildCertificateRow(QLineEdit *edit, bool certificat
 
 void AdvancedConfigWgt::setRunning(bool running)
 {
-    if (_section != SoftwareUpdate) setDisabled(running);
+    if (_section != DesktopShortcuts && _section != SoftwareUpdate) setDisabled(running);
 }

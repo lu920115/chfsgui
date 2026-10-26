@@ -23,6 +23,7 @@ public:
         FileRemove,
         SessionTimeout,
         PageQrCode,
+        DesktopShortcuts,
         SoftwareUpdate
     };
 
@@ -38,6 +39,7 @@ private:
     void buildFileRemove();
     void buildSessionTimeout();
     void buildPageQrCode();
+    void buildDesktopShortcuts();
     void buildSoftwareUpdate();
 
     Section _section;
