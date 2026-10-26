@@ -87,7 +87,7 @@ jobs:
         run: |
           set -euo pipefail
           objdump -p "output/$TEST_EXE" > output/imports.txt
-          python "output/$TEST_EXE" <<'PY'
+          python - "output/$TEST_EXE" <<'PY'
           import pathlib
           import re
           import subprocess
