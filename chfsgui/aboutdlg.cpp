@@ -1,6 +1,7 @@
 #include "aboutdlg.h"
 #include "ui_aboutdlg.h"
 #include "precompile.h"
+#include "appversion.h"
 
 
 QString AboutDlg::getCHFSver()
@@ -19,10 +20,7 @@ AboutDlg::AboutDlg(QWidget *parent) :
     ui->setupUi(this);
     setWindowFlags(windowFlags()&~Qt::WindowContextHelpButtonHint);
 
-    const QString appTitle = parentWidget()
-        ? parentWidget()->window()->windowTitle()
-        : QStringLiteral("Cute HTTP File Server 3.1 二维码增强版");
-    ui->_lbTitle->setText(QString("<h2>%1</h2>").arg(appTitle.toHtmlEscaped()));
+    ui->_lbTitle->setText(QString("<h2>%1</h2>").arg(QStringLiteral(APP_ABOUT_TITLE).toHtmlEscaped()));
 }
 
 AboutDlg::~AboutDlg()
