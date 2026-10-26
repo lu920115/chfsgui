@@ -21,7 +21,7 @@ void ConfigWgt::paintEvent(QPaintEvent *)
     QStyleOption opt;
     opt.init(this);
     QPainter p(this);
-    style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
+    style()->drawPrimitive(QStyle::PE_Widget, &opt, this);
 }
 
 void ConfigWgt::onEditorMode()
@@ -123,6 +123,7 @@ void ConfigWgt::createComponents()
     addAdvancedSection(tr("文件删除"), AdvancedConfigWgt::FileRemove);
     addAdvancedSection(tr("会话时长"), AdvancedConfigWgt::SessionTimeout);
     addAdvancedSection(tr("页面二维码"), AdvancedConfigWgt::PageQrCode);
+    addAdvancedSection(tr("快捷方式"), AdvancedConfigWgt::DesktopShortcuts);
     addAdvancedSection(tr("更新"), AdvancedConfigWgt::SoftwareUpdate);
 
     _pageLayout->addStretch(1);
@@ -138,3 +139,4 @@ void ConfigWgt::createComponents()
     mainLayout->addWidget(_navigation);
     mainLayout->addWidget(_scrollArea, 1);
 }
+

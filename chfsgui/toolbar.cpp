@@ -6,7 +6,6 @@
 #include "aboutdlg.h"
 #include "appprotection.h"
 #include "updatemanager.h"
-#include "desktopshortcut.h"
 #include <QTimer>
 #include <QFileDialog>
 
@@ -99,17 +98,6 @@ void Toolbar::createActions()
         _updateManager->setAutoCheckEnabled(checked);
     });
 
-    QAction *createShortcuts = menu->addAction(tr("创建桌面快捷方式"));
-    connect(createShortcuts, &QAction::triggered, this, [=]() {
-        QString error;
-        if (DesktopShortcut::create(&error)) {
-            QMessageBox::information(this, tr("桌面快捷方式"),
-                tr("已创建程序图标和“CHFS 共享网页”图标。\n网页图标会在打开时获取当前服务地址，更换 Wi-Fi 后无需重新创建。"));
-        } else {
-            QMessageBox::warning(this, tr("桌面快捷方式"), error);
-        }
-    });
-
     QTimer::singleShot(4000, this, [=]() {
         if (_updateManager->autoCheckEnabled() && !UpdateManager::repository().isEmpty()) {
             _updateManager->checkForUpdates(true);
@@ -134,7 +122,7 @@ void Toolbar::paintEvent(QPaintEvent *)
     QStyleOption opt;
     opt.init(this);
     QPainter p(this);
-    style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
+    style()->drawPrimitive(QStyle::PE_Widget, &opt, this);
 }
 
 void Toolbar::createContents()
@@ -221,3 +209,4 @@ void Toolbar::stopState()
     _btnPlay->show();
     _btnStop->hide();
 }
+

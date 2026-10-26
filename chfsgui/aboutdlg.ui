@@ -34,7 +34,7 @@
         <string>TextLabel</string>
        </property>
        <property name="wordWrap">
-        <bool>true</bool>
+        <bool>false</bool>
        </property>
       </widget>
      </item>
@@ -86,7 +86,7 @@
      <item>
       <widget class="QLabel" name="labelModification">
        <property name="text">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;基于原项目二次修改，联系地址：&lt;a href=&quot;https://github.com/lu920115/chfsgui&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#00aa00;&quot;&gt;https://github.com/lu920115/chfsgui&lt;/span&gt;&lt;/a&gt;，关注微信公众号：是开心的老六呀，关注公众号获取更多使用小工具；也可以访问个人网站：&lt;a href=&quot;https://lushixin.cn&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#00aa00;&quot;&gt;https://lushixin.cn&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;基于原项目二次修改，联系地址：&lt;a href=&quot;https://github.com/lu920115/chfsgui&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#00aa00;&quot;&gt;https://github.com/lu920115/chfsgui&lt;/span&gt;&lt;/a&gt;，关注微信公众号：是开心的老六呀，获取更多使用小工具；也可以访问个人网站：&lt;a href=&quot;https://lushixin.cn&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#00aa00;&quot;&gt;https://lushixin.cn&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="openExternalLinks">
         <bool>true</bool>
