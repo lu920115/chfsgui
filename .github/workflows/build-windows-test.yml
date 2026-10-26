@@ -1,0 +1,126 @@
+name: Build Windows test EXE
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/build-windows-test.yml
+
+permissions:
+  contents: read
+
+jobs:
+  build-test-exe:
+    runs-on: windows-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up MSYS2 MINGW64
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-toolchain
+            make
+            python
+
+      - name: Install pinned static Qt and dependencies
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          repo='https://repo.msys2.org/mingw/mingw64'
+          pacman -U --noconfirm \
+            "$repo/mingw-w64-x86_64-qt5-static-5.15.19-1-any.pkg.tar.zst" \
+            "$repo/mingw-w64-x86_64-openssl-3.6.5-1-any.pkg.tar.zst" \
+            "$repo/mingw-w64-x86_64-zlib-1.3.2-3-any.pkg.tar.zst" \
+            "$repo/mingw-w64-x86_64-zstd-1.5.7-2-any.pkg.tar.zst"
+
+      - name: Build static test EXE
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          export PATH='/mingw64/qt5-static/bin:/mingw64/bin':"$PATH"
+          mkdir -p build output
+          cd build
+          qmake ../chfsgui/chfsgui.pro \
+            CONFIG+=release CONFIG-=debug \
+            'QMAKE_LFLAGS+=-static -static-libgcc -static-libstdc++'
+          make -j"${NUMBER_OF_PROCESSORS:-4}"
+          test -f release/chfsgui.exe
+          version="$(sed -n 's/^#define APP_VERSION "\([^"]*\)"$/\1/p' ../chfsgui/appversion.h)"
+          test -n "$version"
+          name="CHFS3.1_GUI_Qrcode_v${version}_test.exe"
+          cp release/chfsgui.exe "../output/$name"
+          printf 'TEST_EXE=%s\n' "$name" >> "$GITHUB_ENV"
+          printf 'TEST_ARTIFACT=chfsgui-v%s-test\n' "$version" >> "$GITHUB_ENV"
+
+      - name: Verify official CHFS core and test metadata
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          printf '%s  %s\n' \
+            '5ac710185ff59b59293620ab89ea1cc59927c506bb82de128c6e4a4885b6ca1e' \
+            'chfsgui/chfs_resource/chfs.exe' | sha256sum -c -
+          version="$(sed -n 's/^#define APP_VERSION "\([^"]*\)"$/\1/p' chfsgui/appversion.h)"
+          python - "$version" "output/$TEST_EXE" <<'PY'
+          import pathlib
+          import sys
+
+          version, filename = sys.argv[1:]
+          data = pathlib.Path(filename).read_bytes()
+          assert data[:2] == b'MZ', 'Missing MZ header'
+          title = f'CHFS 3.1 Qrcode V{version}'
+          assert title.encode('utf-16le') in data, 'Missing embedded about title'
+          assert b'DesktopShortcuts' in data, 'Missing shortcut settings code'
+          print(f'PE header and v{version} metadata: OK')
+          PY
+
+      - name: Verify static linkage and Windows 7 imports
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          objdump -p "output/$TEST_EXE" > output/imports.txt
+          python "output/$TEST_EXE" <<'PY'
+          import pathlib
+          import re
+          import subprocess
+          import sys
+
+          filename = sys.argv[1]
+          dump = subprocess.check_output(['objdump', '-p', filename], text=True)
+          dlls = {x.lower() for x in re.findall(r'^\s*DLL Name:\s*(\S+)', dump, re.M)}
+          banned_symbols = {'GetSystemTimePreciseAsFileTime', 'ProcessPrng'}
+          found_banned = sorted(x for x in banned_symbols if re.search(r'\b' + re.escape(x) + r'\b', dump))
+          forbidden_dlls = {
+              'ucrtbase.dll', 'bcryptprimitives.dll', 'libgcc_s_seh-1.dll',
+              'libstdc++-6.dll', 'libwinpthread-1.dll', 'libssl-3-x64.dll',
+              'libcrypto-3-x64.dll', 'vulkan-1.dll', 'd3d12.dll'
+          }
+          bad_dlls = sorted(
+              x for x in dlls
+              if x in forbidden_dlls or x.startswith('api-ms-win-')
+              or x.startswith(('vcruntime', 'msvcp', 'qt5'))
+          )
+          assert not found_banned, f'Banned Win8+ imports: {found_banned}'
+          assert not bad_dlls, f'Unsafe or non-static DLL imports: {bad_dlls}'
+          assert 'msvcrt.dll' in dlls, 'Expected direct MSVCRT runtime'
+          print('Static linkage and Win7 import checks: PASS')
+          print('Imported DLLs:', ', '.join(sorted(dlls)))
+          PY
+          cd output
+          sha256sum "$TEST_EXE" > "$TEST_EXE.sha256.txt"
+
+      - name: Upload test EXE and verification reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.TEST_ARTIFACT }}
+          path: |
+            output/*.exe
+            output/*.sha256.txt
+            output/imports.txt
+          if-no-files-found: error
+          retention-days: 14
