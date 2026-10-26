@@ -5,6 +5,10 @@
 - **chfs**：免费的 HTTP 协议文件共享服务器，单文件运行，浏览器即可访问
 - **chfsgui**：Windows 图形界面封装版（本仓库 fork 自 [docblue/chfsgui](https://github.com/docblue/chfsgui)）
 
+## 二次修改版云端构建
+
+Windows 二维码增强版使用 GitHub Actions 构建单文件静态 test EXE。其他 Agent 接手前请先阅读 [Agent 操作约定](AGENTS.md)，详细命令、验证清单和实际踩坑记录见 [Windows 云端 test EXE 构建指南](docs/windows-cloud-build.md)。test 构件不是正式 Release，正式 EXE 仍由 `lu920115/chfs-gui-qrcode` 仓库发布。
+
 ## 简介
 
 CuteHttpFileServer/chfs 是一个免费的、HTTP 协议的文件共享服务器，使用浏览器即可快速访问。特点：
