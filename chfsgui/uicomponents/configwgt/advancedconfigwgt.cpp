@@ -77,6 +77,7 @@ void AdvancedConfigWgt::buildSslHttps()
     });
 
     QFormLayout *form = new QFormLayout;
+    form->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
     form->addRow(tr("证书："), buildCertificateRow(_sslCertEdit, true));
     form->addRow(tr("密钥："), buildCertificateRow(_sslKeyEdit, false));
 
