@@ -192,13 +192,16 @@ jobs:
           retention-days: 30
 
       - name: Commit EXE and SHA-256 to source repository
-        shell: msys2 {0}
+        shell: pwsh
         run: |
-          set -euo pipefail
+          $ErrorActionPreference = 'Stop'
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- "$FINAL_EXE" "$FINAL_EXE.sha256.txt"
-          if ! git diff --cached --quiet; then
-            git commit -m "Build v${APP_VERSION} Windows EXE"
-          fi
+          git add -- $env:FINAL_EXE "$env:FINAL_EXE.sha256.txt"
+          $changes = git diff --cached --name-only
+          if ($changes) {
+            git commit -m "Build v$env:APP_VERSION Windows EXE"
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
           git push origin HEAD:master
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
