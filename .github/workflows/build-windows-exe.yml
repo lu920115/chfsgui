@@ -124,6 +124,9 @@ jobs:
 
       - name: Verify static linkage and Windows 7 imports
         shell: msys2 {0}
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: 1
         run: |
           set -euo pipefail
           cp "$FINAL_EXE" output/chfsgui-verify.exe
