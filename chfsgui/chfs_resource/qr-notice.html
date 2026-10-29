@@ -57,8 +57,10 @@ document.addEventListener("click",function(event){
 #qrcode,#qrModal,button.qrcode{display:none!important}
 #chfsPageTitle{margin:0 0 10px;color:#20242A;font:700 22px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",Arial,sans-serif;word-break:break-word}
 #chfsQrHelper[data-enabled="0"]{display:none!important}
-#chfsUserNotice{margin:0 0 14px;padding:12px 16px;border:1px solid #E2C46D;border-radius:6px;background:#FFF9E8;color:#4A402B;font:600 15px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",Arial,sans-serif;white-space:normal;word-break:break-word}
+#chfsUserNotice{margin:0 0 14px;padding:12px 16px;border:1px solid #B71C1C;border-radius:6px;background:#C62828;color:#FFFFFF;font:700 15px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",Arial,sans-serif;white-space:normal;word-break:break-word;box-sizing:border-box;text-shadow:0 1px 2px rgba(0,0,0,.3)}
+#chfsUserNotice strong{color:#FFFFFF}
 #chfsUserNotice:empty{display:none}
+@media(min-width:1280px){body.chfs-desktop-notice #chfsUserNotice{position:fixed;z-index:9000;top:0;left:0;right:0;margin:0;border-width:0 0 2px;border-radius:0;box-shadow:0 2px 10px rgba(120,0,0,.25)}}
 #chfsQrHelper{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",Arial,sans-serif;color:#3C403C;font-size:13px;line-height:1.45;box-sizing:border-box}
 #chfsQrHelper *{box-sizing:border-box}
 #chfsQrHelper .chfs-qr-box{width:100%;padding:16px;background:#F0FFF0;border:1.5px solid #3C403C;border-radius:8px;box-shadow:0 3px 16px rgba(0,0,0,.10)}
@@ -143,5 +145,51 @@ function prepareBinary(link){
 }
 function binaryEvent(event){var link=event.target.closest?event.target.closest(".iconFilenameContainer a[href*='/chfs/shared/']"):null;prepareBinary(link)}
 document.addEventListener("mouseover",binaryEvent,true);document.addEventListener("click",binaryEvent,true);
+})();
+</script>
+<style>
+#chfsContactPage{position:fixed;inset:0;z-index:11000;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.62);box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",Arial,sans-serif}
+#chfsContactPage.chfs-contact-open{display:flex}
+#chfsContactPage .chfs-contact-dialog{position:relative;width:100%;max-width:680px;max-height:90vh;overflow:auto;padding:28px;border-radius:10px;background:#FFFFFF;color:#252A30;box-shadow:0 12px 40px rgba(0,0,0,.35);box-sizing:border-box}
+#chfsContactPage h3{margin:0 36px 20px 0;font-size:22px}
+#chfsContactPage h4{margin:13px 0;font-size:15px;line-height:1.6;font-weight:500;word-break:break-word}
+#chfsContactPage a{color:#1565C0;text-decoration:none}
+#chfsContactPage a:hover,#chfsContactPage a:focus{text-decoration:underline}
+#chfsContactPage .chfs-contact-version{margin:22px 0 0;padding-top:16px;border-top:1px solid #E0E0E0;color:#616161;font-size:14px}
+#chfsContactPage .chfs-contact-close{position:absolute;top:12px;right:12px;width:34px;height:34px;padding:0;border:0;background:transparent;color:#4B5359;font-size:27px;line-height:34px;cursor:pointer}
+@media(max-width:480px){#chfsContactPage{padding:12px}#chfsContactPage .chfs-contact-dialog{padding:22px 18px}}
+</style>
+<div id="chfsContactPage" role="dialog" aria-modal="true" aria-labelledby="chfsContactTitle">
+<div class="chfs-contact-dialog"><button type="button" class="chfs-contact-close" id="chfsContactClose" aria-label="关闭">×</button>
+<h3 id="chfsContactTitle">联系</h3>
+<h4>原版 CHFS 官网：<a href="http://chfs.iscute.cn" target="_blank" rel="noopener">http://chfs.iscute.cn</a></h4>
+<h4>GitHub 仓库：<a href="https://github.com/lu920115/chfsgui" target="_blank" rel="noopener">https://github.com/lu920115/chfsgui</a></h4>
+<h4>个人网站：<a href="https://lushixin.cn" target="_blank" rel="noopener">https://lushixin.cn</a></h4>
+<h4>联系邮箱：<a href="mailto:support@lushixin.cn">support@lushixin.cn</a></h4>
+<p class="chfs-contact-version">CHFS 3.1 二维码增强版 v__CHFS_QR_VERSION__</p>
+</div></div>
+<script>
+(function(){
+function byId(id){return document.getElementById(id)}
+function syncNotice(){
+ var notice=byId("chfsUserNotice");if(!notice||!document.body){return}
+ if(window.innerWidth>=1280){document.body.classList.add("chfs-desktop-notice");document.body.style.paddingTop=notice.offsetHeight+"px"}
+ else{document.body.classList.remove("chfs-desktop-notice");document.body.style.paddingTop=""}
+}
+function replaceVersion(){
+ var paragraphs=document.querySelectorAll("footer.fileitemTr p");
+ for(var i=0;i<paragraphs.length;i++){var text=paragraphs[i].textContent.replace(/^\s+|\s+$/g,"");if(/^v3\.1$/i.test(text)){paragraphs[i].textContent="v__CHFS_QR_VERSION__"}}
+}
+function openContact(){var page=byId("chfsContactPage");if(page){page.classList.add("chfs-contact-open")}}
+function closeContact(){var page=byId("chfsContactPage");if(page){page.classList.remove("chfs-contact-open")}}
+document.addEventListener("click",function(event){
+ var link=event.target.closest?event.target.closest('a[href="/contact"]'):null;
+ if(link){event.preventDefault();openContact()}
+},true);
+var close=byId("chfsContactClose");if(close){close.onclick=closeContact}
+var page=byId("chfsContactPage");if(page){page.onclick=function(event){if(event.target===page){closeContact()}}}
+document.addEventListener("keydown",function(event){if(event.key==="Escape"){closeContact()}},false);
+replaceVersion();syncNotice();
+if(window.addEventListener){window.addEventListener("load",function(){replaceVersion();syncNotice()});window.addEventListener("resize",syncNotice)}
 })();
 </script>

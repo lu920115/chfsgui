@@ -7,7 +7,11 @@
 
 ## 二次修改版云端构建
 
-Windows 二维码增强版使用 GitHub Actions 构建单文件静态 test EXE。其他 Agent 接手前请先阅读 [Agent 操作约定](AGENTS.md)，详细命令、验证清单和实际踩坑记录见 [Windows 云端 test EXE 构建指南](docs/windows-cloud-build.md)。test 构件不是正式 Release，正式 EXE 仍由 `lu920115/chfs-gui-qrcode` 仓库发布。
+Windows 二维码增强版使用 GitHub Actions 构建单文件静态 EXE。其他 Agent 接手前请先阅读 [Agent 操作约定](AGENTS.md)，详细命令、验证清单和实际踩坑记录见 [Windows 云端 EXE 构建指南](docs/windows-cloud-build.md)。
+
+- `build-windows-test.yml`：构建 test 构件，不创建正式 Release。
+- `build-windows-exe.yml`：手动构建正式 EXE，将 EXE 和 SHA-256 文件提交到本仓库根目录，不自动创建 Release。
+- `lu920115/chfs-gui-qrcode` 的同步工作流会从本仓库下载并校验同一份正式 EXE，再提交到目标仓库根目录，不重复编译，也不需要跨仓库 Token。
 
 ## 简介
 

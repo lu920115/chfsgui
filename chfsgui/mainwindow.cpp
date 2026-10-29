@@ -161,8 +161,7 @@ void MainWindow::onRemoteMessage(const QString &message)
 
 void MainWindow::openSharedPage()
 {
-    onShowWindow();
-    if (!_unlocked) return;
+    if (!unlock()) return;
 
     if (g_chfsProcess.state() != QProcess::NotRunning && !_websiteUrl.isEmpty()) {
         QDesktopServices::openUrl(QUrl(_websiteUrl));
@@ -209,6 +208,10 @@ void MainWindow::fireLaunch()
     } else {
         arguments << QString("--path=%1").arg(g_settings.value(PARAM_PATH).toString());
         arguments << QString("--port=%1").arg(g_settings.value(PARAM_PORT).toString());
+        arguments << QString("--allow=%1").arg(g_settings.value(PARAM_ALLOW).toString());
+        arguments << QString("--rule=%1").arg(g_settings.value(PARAM_RULE).toString());
+        extern QString logPathRoot;
+        arguments << QString("--log=%1").arg(logPathRoot);
         QMessageBox::warning(
             this,
             tr("二维码配置"),

@@ -1,0 +1,196 @@
+name: Build Windows EXE
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-and-publish-windows-exe
+  cancel-in-progress: false
+
+jobs:
+  build-and-publish:
+    runs-on: windows-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out GUI source
+        uses: actions/checkout@v5
+        with:
+          ref: master
+
+      - name: Set up MSYS2 MINGW64
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          # MINGW64/MSVCRT is intentional for Windows 7; do not switch to UCRT64.
+          suppress-deprecation-warnings: msystem-mingw64
+          install: >-
+            mingw-w64-x86_64-toolchain
+            make
+            python
+
+      - name: Install pinned static Qt and dependencies
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          repo='https://repo.msys2.org/mingw/mingw64'
+          pacman -U --noconfirm \
+            "$repo/mingw-w64-x86_64-qt5-static-5.15.19-1-any.pkg.tar.zst" \
+            "$repo/mingw-w64-x86_64-openssl-3.6.5-1-any.pkg.tar.zst" \
+            "$repo/mingw-w64-x86_64-zlib-1.3.2-3-any.pkg.tar.zst" \
+            "$repo/mingw-w64-x86_64-zstd-1.5.7-2-any.pkg.tar.zst"
+
+      - name: Build static Windows EXE
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          export PATH='/mingw64/qt5-static/bin:/mingw64/bin':"$PATH"
+          mkdir -p build output
+          {
+            printf 'Source repository: %s\n' "$GITHUB_REPOSITORY"
+            printf 'Source commit: %s\n' "$GITHUB_SHA"
+            printf 'Target repository: lu920115/chfs-gui-qrcode\n'
+            printf 'GitHub run: %s\n' "$GITHUB_RUN_ID"
+            g++ --version
+            qmake --version
+            make --version | sed -n '1p'
+            pacman -Q mingw-w64-x86_64-qt5-static \
+              mingw-w64-x86_64-openssl mingw-w64-x86_64-zlib \
+              mingw-w64-x86_64-zstd
+          } > output/build-environment.txt
+          cd build
+          qmake ../chfsgui/chfsgui.pro \
+            CONFIG+=release CONFIG-=debug \
+            'QMAKE_LFLAGS+=-static -static-libgcc -static-libstdc++'
+          make -j"${NUMBER_OF_PROCESSORS:-4}"
+          test -f release/chfsgui.exe
+          version="$(sed -n 's/^#define APP_VERSION "\([^"]*\)"$/\1/p' ../chfsgui/appversion.h)"
+          test -n "$version"
+          name="CHFS3.1_GUI二维码增强版_v${version}.exe"
+          cp release/chfsgui.exe "../$name"
+          printf 'APP_VERSION=%s\n' "$version" >> "$GITHUB_ENV"
+          printf 'FINAL_EXE=%s\n' "$name" >> "$GITHUB_ENV"
+          printf 'FINAL_ARTIFACT=chfsgui-v%s-windows\n' "$version" >> "$GITHUB_ENV"
+
+      - name: Verify source changes and official CHFS core
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          printf '%s  %s\n' \
+            '5ac710185ff59b59293620ab89ea1cc59927c506bb82de128c6e4a4885b6ca1e' \
+            'chfsgui/chfs_resource/chfs.exe' | sha256sum -c -
+          python - "$APP_VERSION" "$FINAL_EXE" <<'PY'
+          import pathlib
+          import sys
+
+          version, filename = sys.argv[1:]
+          root = pathlib.Path('chfsgui')
+          data = pathlib.Path(filename).read_bytes()
+          core = (root / 'chfs_resource/chfs.exe').read_bytes()
+          notice = (root / 'chfs_resource/qr-notice.html').read_text(encoding='utf-8')
+          main = (root / 'mainwindow.cpp').read_text(encoding='utf-8')
+          qrconfig = (root / 'qrconfig.cpp').read_text(encoding='utf-8')
+
+          assert data[:2] == b'MZ', 'Missing MZ header'
+          assert core in data, 'Official CHFS core is not embedded byte-for-byte'
+          title = f'CHFS 3.1 Qrcode V{version}'
+          assert title.encode('utf-16le') in data, 'Missing embedded about title'
+          assert '创建桌面快捷方式'.encode('utf-8') in data, 'Missing shortcut settings UI'
+
+          for text in (
+              'https://github.com/lu920115/chfsgui',
+              'https://lushixin.cn',
+              'support@lushixin.cn',
+              'v__CHFS_QR_VERSION__',
+              'background:#C62828',
+              'color:#FFFFFF',
+              'position:fixed',
+          ):
+              assert text in notice, f'Missing web resource marker: {text}'
+          assert '`' not in notice, 'Backtick conflicts with html.notice delimiter'
+          assert 'notice.replace("__CHFS_QR_VERSION__", APP_VERSION);' in qrconfig
+          assert 'window.setVisible(!automatic && !openWeb);' in (root / 'main.cpp').read_text(encoding='utf-8')
+          open_web = main.split('void MainWindow::openSharedPage()', 1)[1].split('\n}', 1)[0]
+          assert 'onShowWindow()' not in open_web, 'Web shortcut still shows the main window'
+          fallback = main.split('} else {', 1)[1].split('g_chfsProcess.start', 1)[0]
+          for argument in ('--allow=%1', '--rule=%1', '--log=%1'):
+              assert argument in fallback, f'Missing fallback argument: {argument}'
+          print(f'PE header, v{version} metadata, source changes and official core: OK')
+          PY
+
+      - name: Verify static linkage and Windows 7 imports
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          python - "$FINAL_EXE" <<'PY'
+          import pathlib
+          import re
+          import subprocess
+          import sys
+
+          filename = sys.argv[1]
+          dump = subprocess.check_output(['objdump', '-p', filename], text=True)
+          dlls = {x.lower() for x in re.findall(r'^\s*DLL Name:\s*(\S+)', dump, re.M)}
+          banned_symbols = {'GetSystemTimePreciseAsFileTime', 'ProcessPrng'}
+          found_banned = sorted(x for x in banned_symbols if re.search(r'\b' + re.escape(x) + r'\b', dump))
+          forbidden_dlls = {
+              'ucrtbase.dll', 'bcryptprimitives.dll', 'libgcc_s_seh-1.dll',
+              'libstdc++-6.dll', 'libwinpthread-1.dll', 'libssl-3-x64.dll',
+              'libcrypto-3-x64.dll', 'vulkan-1.dll', 'd3d12.dll'
+          }
+          bad_dlls = sorted(
+              x for x in dlls
+              if x in forbidden_dlls or x.startswith('api-ms-win-')
+              or x.startswith(('vcruntime', 'msvcp', 'qt5'))
+          )
+          assert not found_banned, f'Banned Win8+ imports: {found_banned}'
+          assert not bad_dlls, f'Unsafe or non-static DLL imports: {bad_dlls}'
+          assert 'msvcrt.dll' in dlls, 'Expected direct MSVCRT runtime'
+
+          report = [f'Final EXE: {filename}', '']
+          header_keys = (
+              'file format', 'architecture', 'Time/Date', 'MajorLinkerVersion',
+              'MinorLinkerVersion', 'SizeOfImage', 'Subsystem', 'DllCharacteristics'
+          )
+          report.extend(
+              line.strip() for line in dump.splitlines()
+              if line.strip().startswith(header_keys)
+          )
+          report.extend(['', 'Static linkage and Win7 import checks: PASS',
+                         'Banned Win8+ symbols: none',
+                         'Unsafe or non-static DLL imports: none',
+                         '', 'Imported DLLs:', *sorted(dlls)])
+          pathlib.Path('output/verification.txt').write_text(
+              '\n'.join(report) + '\n', encoding='utf-8'
+          )
+          print('\n'.join(report))
+          PY
+          sha256sum "$FINAL_EXE" > "$FINAL_EXE.sha256.txt"
+
+      - name: Upload EXE and verification reports
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.FINAL_ARTIFACT }}
+          path: |
+            ${{ env.FINAL_EXE }}
+            ${{ env.FINAL_EXE }}.sha256.txt
+            output/verification.txt
+            output/build-environment.txt
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Commit EXE and SHA-256 to source repository
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- "$FINAL_EXE" "$FINAL_EXE.sha256.txt"
+          if ! git diff --cached --quiet; then
+            git commit -m "Build v${APP_VERSION} Windows EXE"
+          fi
+          git push origin HEAD:master

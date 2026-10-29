@@ -1,4 +1,5 @@
 #include "qrconfig.h"
+#include "appversion.h"
 
 #include <QByteArray>
 #include <QDir>
@@ -177,6 +178,7 @@ bool createQrConfig(QString &path, QString &errorMessage)
     if (pageNotice.isEmpty()) pageNotice = defaultPageNotice();
     notice.replace("__CHFS_PAGE_TITLE__", escapedNoticeText(pageTitle));
     notice.replace("__CHFS_USER_NOTICE__", escapedNoticeText(pageNotice));
+    notice.replace("__CHFS_QR_VERSION__", APP_VERSION);
     notice.replace(
         "__CHFS_FAST_IMAGE_PREVIEW__",
         g_settings.value("IMAGE_PREVIEW", true).toBool() &&
