@@ -126,14 +126,16 @@ jobs:
         shell: msys2 {0}
         run: |
           set -euo pipefail
-          python - "$FINAL_EXE" <<'PY'
+          cp "$FINAL_EXE" output/chfsgui-verify.exe
+          python - "$FINAL_EXE" output/chfsgui-verify.exe <<'PY'
+          import hashlib
           import pathlib
           import re
           import subprocess
           import sys
 
-          filename = sys.argv[1]
-          dump = subprocess.check_output(['objdump', '-p', filename], text=True)
+          filename, verify_name = sys.argv[1:]
+          dump = subprocess.check_output(['objdump', '-p', verify_name], text=True)
           dlls = {x.lower() for x in re.findall(r'^\s*DLL Name:\s*(\S+)', dump, re.M)}
           banned_symbols = {'GetSystemTimePreciseAsFileTime', 'ProcessPrng'}
           found_banned = sorted(x for x in banned_symbols if re.search(r'\b' + re.escape(x) + r'\b', dump))
@@ -168,8 +170,11 @@ jobs:
               '\n'.join(report) + '\n', encoding='utf-8'
           )
           print('\n'.join(report))
+          digest = hashlib.sha256(pathlib.Path(verify_name).read_bytes()).hexdigest()
+          pathlib.Path(filename + '.sha256.txt').write_text(
+              f'{digest}  {filename}\n', encoding='utf-8'
+          )
           PY
-          sha256sum "$FINAL_EXE" > "$FINAL_EXE.sha256.txt"
 
       - name: Upload EXE and verification reports
         uses: actions/upload-artifact@v7
