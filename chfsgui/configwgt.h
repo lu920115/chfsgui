@@ -23,11 +23,18 @@ public:
     void createComponents();
     void onEditorMode();
     void onRunningMode();
+    void relock();
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override;
 private:
     QWidget *createSection(const QString &title, QWidget *content);
-    void addAdvancedSection(const QString &name, AdvancedConfigWgt::Section section);
+    void addAdvancedSection(const QString &name, AdvancedConfigWgt::Section section,
+                            bool protect = true);
     void addNavigationSection(const QString &name, QWidget *content);
+    void protectContent(QWidget *content);
     void scrollToSection(int row);
+
+    bool _unlocked = false;
 
     CfgSharedpathWgt* _sharedpathWgt;
     CfgAllowip* _allowWgt;

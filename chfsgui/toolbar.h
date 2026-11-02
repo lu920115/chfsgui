@@ -39,6 +39,7 @@ signals:
     void sigRunningMode();
     void sigFireLaunch();
     void sigAutorunSwitching(bool isAuto);
+    void sigProtectionChanged();
     void sigQuit();
 public slots:
 

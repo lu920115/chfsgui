@@ -74,14 +74,17 @@ void Toolbar::createActions()
     connect(enableProtection, &QAction::triggered, this, [=]() {
         AppProtection::enable(this);
         refreshProtection();
+        emit sigProtectionChanged();
     });
     connect(changeProtection, &QAction::triggered, this, [=]() {
         AppProtection::changePassword(this);
         refreshProtection();
+        emit sigProtectionChanged();
     });
     connect(disableProtection, &QAction::triggered, this, [=]() {
         AppProtection::disable(this);
         refreshProtection();
+        emit sigProtectionChanged();
     });
     refreshProtection();
 

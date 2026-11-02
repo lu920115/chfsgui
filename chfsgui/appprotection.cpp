@@ -91,7 +91,7 @@ bool unlock(QWidget *parent)
     while (isEnabled()) {
         if (verify(parent)) return true;
         if (QMessageBox::question(parent, QObject::tr("密码保护"),
-                QObject::tr("是否重试？选择“否”将不打开主窗口。")) != QMessageBox::Yes) {
+                QObject::tr("是否重试？选择“否”将取消本次设置修改。")) != QMessageBox::Yes) {
             return false;
         }
     }
@@ -103,7 +103,7 @@ bool enable(QWidget *parent)
     if (isEnabled()) return true;
     if (!setNewPassword(parent)) return false;
     QMessageBox::information(parent, QObject::tr("密码保护"),
-        QObject::tr("已开启保护。下次打开主窗口，以及关闭或修改保护时需要输入密码。\n该功能仅保护本机 GUI 设置，不替代共享账户权限。"));
+        QObject::tr("已开启保护。修改主界面共享设置，以及关闭或修改保护时需要输入密码。\n自动启动、运行服务和打开共享网页不受限制。\n该功能仅保护本机 GUI 设置，不替代共享账户权限。"));
     return true;
 }
 

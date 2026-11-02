@@ -5,7 +5,7 @@
 ## 仓库边界
 
 - 完整修改版源码仓库：`lu920115/chfsgui`。
-- 正式 EXE 在本仓库和 `lu920115/chfs-gui-qrcode` 各保存一份；Releases 和默认更新源仍使用 `lu920115/chfs-gui-qrcode`。
+- 正式 EXE 通过本仓库和 `lu920115/chfs-gui-qrcode` 的 Releases 各发布一份，不提交到仓库根目录；默认更新源仍使用 `lu920115/chfs-gui-qrcode`。
 - 不向上游 `docblue/chfsgui` 推送，不创建上游 PR。
 - 云端 test 构件不是正式 Release，不修改更新源，不把 test 当作已发布版本。
 - 不索取用户密码或 Token。需要 GitHub 授权时使用官方设备授权流程。
@@ -21,7 +21,7 @@
 - 构件名：`chfsgui-v<版本>-test`，保留 14 天。
 - 下载后必须核对 SHA-256，并重新检查 PE 导入、内嵌核心和关键版本标记。
 
-正式构建使用 `.github/workflows/build-windows-exe.yml`，只手动触发。它从本仓库编译并向本仓库 `master` 提交正式 EXE 与 SHA-256 文件，不自动创建 Release。随后由 `lu920115/chfs-gui-qrcode` 的同步工作流下载、校验并提交同一份文件到 `main`，不重复编译，也不需要跨仓库 Token。
+正式构建使用 `.github/workflows/build-windows-exe.yml`，只手动触发。它从本仓库编译并向本仓库 Releases 发布正式 EXE 与 SHA-256 文件，不提交到仓库根目录。随后由 `lu920115/chfs-gui-qrcode` 的同步工作流下载、校验并发布同一份文件到目标仓库 Releases，不重复编译，也不需要跨仓库 Token。
 
 ## 不可随意改变的约束
 

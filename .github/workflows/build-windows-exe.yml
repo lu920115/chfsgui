@@ -94,6 +94,9 @@ jobs:
           notice = (root / 'chfs_resource/qr-notice.html').read_text(encoding='utf-8')
           main = (root / 'mainwindow.cpp').read_text(encoding='utf-8')
           qrconfig = (root / 'qrconfig.cpp').read_text(encoding='utf-8')
+          config = (root / 'configwgt.cpp').read_text(encoding='utf-8')
+          protection = (root / 'appprotection.cpp').read_text(encoding='utf-8')
+          entry = (root / 'main.cpp').read_text(encoding='utf-8')
 
           assert data[:2] == b'MZ', 'Missing MZ header'
           assert core in data, 'Official CHFS core is not embedded byte-for-byte'
@@ -113,9 +116,15 @@ jobs:
               assert text in notice, f'Missing web resource marker: {text}'
           assert '`' not in notice, 'Backtick conflicts with html.notice delimiter'
           assert 'notice.replace("__CHFS_QR_VERSION__", APP_VERSION);' in qrconfig
-          assert 'window.setVisible(!automatic && !openWeb);' in (root / 'main.cpp').read_text(encoding='utf-8')
+          assert 'window.setVisible(!automatic && !openWeb);' in entry
+          assert 'window.unlock()' not in entry, 'Startup still requires the GUI password'
           open_web = main.split('void MainWindow::openSharedPage()', 1)[1].split('\n}', 1)[0]
           assert 'onShowWindow()' not in open_web, 'Web shortcut still shows the main window'
+          assert 'unlock()' not in open_web, 'Web shortcut still requires the GUI password'
+          assert 'AppProtection::unlock(this)' in config, 'Settings edits are not password protected'
+          assert 'AdvancedConfigWgt::DesktopShortcuts, false' in config
+          assert 'AdvancedConfigWgt::SoftwareUpdate, false' in config
+          assert '修改主界面共享设置' in protection
           fallback = main.split('} else {', 1)[1].split('g_chfsProcess.start', 1)[0]
           for argument in ('--allow=%1', '--rule=%1', '--log=%1'):
               assert argument in fallback, f'Missing fallback argument: {argument}'
@@ -191,17 +200,16 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      - name: Commit EXE and SHA-256 to source repository
+      - name: Publish EXE and SHA-256 to GitHub Release
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: |
           $ErrorActionPreference = 'Stop'
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- $env:FINAL_EXE "$env:FINAL_EXE.sha256.txt"
-          $changes = git diff --cached --name-only
-          if ($changes) {
-            git commit -m "Build v$env:APP_VERSION Windows EXE"
-            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          }
-          git push origin HEAD:master
+          $tag = "v$env:APP_VERSION"
+          $title = "CHFS 3.1 Qrcode V$env:APP_VERSION"
+          $notes = 'Windows x64 单文件静态版；官方 CHFS 3.1 核心原样内嵌。SHA-256 校验文件随附。'
+          gh release create $tag $env:FINAL_EXE "$env:FINAL_EXE.sha256.txt" `
+            --repo $env:GH_REPO --title $title --notes $notes
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

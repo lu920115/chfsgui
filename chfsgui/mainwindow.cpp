@@ -1,7 +1,6 @@
 #include "mainwindow.h"
 #include "precompile.h"
 #include "qrconfig.h"
-#include "appprotection.h"
 #include "appversion.h"
 #include <QDesktopWidget>
 #include <QApplication>
@@ -67,6 +66,8 @@ MainWindow::MainWindow(QWidget *parent)
         }
     });
     connect(ui.toolbarWgt,&Toolbar::sigQuit,this,&MainWindow::close);
+    connect(ui.toolbarWgt,&Toolbar::sigProtectionChanged,
+            ui.configWgt,&ConfigWgt::relock);
     connect(ui.toolbarWgt,&Toolbar::sigAutorunSwitching,this,[=](bool isAuto){        
         setAppAutorun(isAuto);
         QSettings(APPDOMAIN, QString(APPKEY)+"/run").setValue(AUTORUNFORBIDDEN,!isAuto);
@@ -134,17 +135,8 @@ void MainWindow::createActions()
     });
 }
 
-bool MainWindow::unlock()
-{
-    if (!_unlocked) {
-        _unlocked = AppProtection::unlock(this);
-    }
-    return _unlocked;
-}
-
 void MainWindow::onShowWindow()
 {
-    if (!unlock()) return;
     showNormal();
     activateWindow();
     raise();
@@ -161,8 +153,6 @@ void MainWindow::onRemoteMessage(const QString &message)
 
 void MainWindow::openSharedPage()
 {
-    if (!unlock()) return;
-
     if (g_chfsProcess.state() != QProcess::NotRunning && !_websiteUrl.isEmpty()) {
         QDesktopServices::openUrl(QUrl(_websiteUrl));
         return;

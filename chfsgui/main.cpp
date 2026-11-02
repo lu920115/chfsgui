@@ -49,7 +49,6 @@ int main(int argc, char *argv[])
     const bool automatic = arguments.contains(QStringLiteral("/auto"))
         || arguments.contains(QStringLiteral("--auto"));
     MainWindow &window = MainWindow::instance();
-    if (!automatic && !openWeb && !window.unlock()) return 0;
     window.setVisible(!automatic && !openWeb);
     QObject::connect(&a, SIGNAL(messageReceived(const QString&)),
                      &window, SLOT(onRemoteMessage(const QString&)));

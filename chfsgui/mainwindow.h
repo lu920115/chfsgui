@@ -41,7 +41,6 @@ public:
 
 private:
     MainWindowUIComponents ui;
-    bool _unlocked = false;
     bool _openWebWhenReady = false;
     QString _websiteUrl;
 
@@ -59,7 +58,6 @@ public slots:
     void onShowWindow();
     void onRemoteMessage(const QString &message);
     void openSharedPage();
-    bool unlock();
 signals:
 
 };
